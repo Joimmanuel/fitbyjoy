@@ -8,7 +8,6 @@ const geist = Geist({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Joy Fit - Personal Progress Tracker',
   description: 'Track your gym progress, workouts, and nutrition',
-  manifest: '/manifest.json',
 }
 
 export const viewport: Viewport = {
