@@ -45,6 +45,12 @@ export default function ProfilePage() {
     setSaving(false)
   }
 
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    window.location.href = '/login'
+  }
+
   async function handleSaveWeight(e: React.FormEvent) {
     e.preventDefault()
     if (!bodyWeight || !userId) return
@@ -155,6 +161,9 @@ export default function ProfilePage() {
           )}
         </CardContent>
       </Card>
+    <button onClick={handleLogout} className="w-full text-sm text-red-500 py-3 text-center font-medium">
+        Sign Out
+      </button>
     </div>
   )
 }

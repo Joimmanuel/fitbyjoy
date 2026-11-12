@@ -1,7 +1,7 @@
 'use client'
 
-import { createContext, useContext } from 'react'
-import { useAnonSession } from '@/hooks/useAnonSession'
+import { createContext, useContext, useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { Dumbbell } from 'lucide-react'
 
 const UserContext = createContext<{ userId: string | null }>({ userId: null })
@@ -11,7 +11,23 @@ export function useUser() {
 }
 
 export default function UserProvider({ children }: { children: React.ReactNode }) {
-  const { userId, ready } = useAnonSession()
+  const [userId, setUserId] = useState<string | null>(null)
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    const supabase = createClient()
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id ?? null)
+      setReady(true)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   if (!ready) {
     return (
