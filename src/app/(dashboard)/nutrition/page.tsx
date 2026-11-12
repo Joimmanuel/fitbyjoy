@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { createClient } from '@/lib/supabase/server'
 import PageHeader from '@/components/layout/PageHeader'
 import NutritionTracker from '@/components/nutrition/NutritionTracker'
