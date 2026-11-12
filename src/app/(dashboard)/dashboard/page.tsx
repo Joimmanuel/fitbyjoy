@@ -5,44 +5,56 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Dumbbell, Flame, TrendingUp, Activity } from 'lucide-react'
 import { format, startOfWeek, endOfWeek } from 'date-fns'
-import { getWorkouts, getNutritionLogs, getSettings } from '@/lib/storage'
-import { WorkoutSession, NutritionLog } from '@/types'
+import { createClient } from '@/lib/supabase/client'
+import { useUser } from '@/components/layout/UserProvider'
 
 export default function DashboardPage() {
-  const [workouts, setWorkouts] = useState<WorkoutSession[]>([])
-  const [nutrition, setNutrition] = useState<NutritionLog[]>([])
+  const { userId } = useUser()
+  const [stats, setStats] = useState({ exercises: 0, sets: 0, calories: 0, weekSessions: 0 })
+  const [todaySessions, setTodaySessions] = useState<any[]>([])
+  const [topProgress, setTopProgress] = useState<{ exercise: string; diff: number } | null>(null)
   const [name, setName] = useState('Athlete')
 
   useEffect(() => {
+    if (!userId) return
+    const supabase = createClient()
     const today = format(new Date(), 'yyyy-MM-dd')
     const weekStart = format(startOfWeek(new Date()), 'yyyy-MM-dd')
     const weekEnd = format(endOfWeek(new Date()), 'yyyy-MM-dd')
-    setWorkouts(getWorkouts())
-    setNutrition(getNutritionLogs().filter(n => n.date === today))
-    setName(getSettings().name)
-  }, [])
 
-  const today = format(new Date(), 'yyyy-MM-dd')
-  const todaySessions = workouts.filter(w => w.date === today)
-  const weekSessions = workouts.filter(w => w.date >= format(startOfWeek(new Date()), 'yyyy-MM-dd') && w.date <= format(endOfWeek(new Date()), 'yyyy-MM-dd'))
-  const totalExercises = todaySessions.reduce((a, s) => a + s.exercises.length, 0)
-  const totalSets = todaySessions.reduce((a, s) => a + s.exercises.reduce((b, e) => b + e.sets, 0), 0)
-  const totalCalories = nutrition.reduce((a, n) => a + n.calories, 0)
+    async function load() {
+      const [profileRes, todayRes, nutritionRes, weekRes, logsRes] = await Promise.all([
+        supabase.from('profiles').select('name').eq('id', userId).single(),
+        supabase.from('workout_sessions').select('*, exercise_logs(*)').eq('user_id', userId).eq('date', today),
+        supabase.from('nutrition_logs').select('calories').eq('user_id', userId).eq('date', today),
+        supabase.from('workout_sessions').select('id').eq('user_id', userId).gte('date', weekStart).lte('date', weekEnd),
+        supabase.from('exercise_logs').select('exercise_name, weight, created_at').eq('user_id', userId).gte('created_at', new Date(startOfWeek(new Date())).toISOString()).order('created_at'),
+      ])
 
-  // Top progress this week
-  const weekExercises = weekSessions.flatMap(s => s.exercises)
-  const exMap: Record<string, number[]> = {}
-  weekExercises.forEach(e => {
-    if (!exMap[e.exercise_name]) exMap[e.exercise_name] = []
-    exMap[e.exercise_name].push(e.weight)
-  })
-  let topProgress: { exercise: string; diff: number } | null = null
-  for (const [name, weights] of Object.entries(exMap)) {
-    if (weights.length >= 2) {
-      const diff = weights[weights.length - 1] - weights[0]
-      if (!topProgress || diff > topProgress.diff) topProgress = { exercise: name, diff }
+      setName(profileRes.data?.name || 'Athlete')
+      setTodaySessions(todayRes.data || [])
+
+      const totalExercises = (todayRes.data || []).reduce((a: number, s: any) => a + (s.exercise_logs?.length || 0), 0)
+      const totalSets = (todayRes.data || []).reduce((a: number, s: any) => a + (s.exercise_logs?.reduce((b: number, e: any) => b + e.sets, 0) || 0), 0)
+      const totalCalories = (nutritionRes.data || []).reduce((a: number, n: any) => a + n.calories, 0)
+      setStats({ exercises: totalExercises, sets: totalSets, calories: totalCalories, weekSessions: weekRes.data?.length || 0 })
+
+      const exMap: Record<string, number[]> = {}
+      logsRes.data?.forEach((l: any) => {
+        if (!exMap[l.exercise_name]) exMap[l.exercise_name] = []
+        exMap[l.exercise_name].push(l.weight)
+      })
+      let top: { exercise: string; diff: number } | null = null
+      for (const [name, weights] of Object.entries(exMap)) {
+        if (weights.length >= 2) {
+          const diff = weights[weights.length - 1] - weights[0]
+          if (!top || diff > top.diff) top = { exercise: name, diff }
+        }
+      }
+      setTopProgress(top)
     }
-  }
+    load()
+  }, [userId])
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
@@ -57,10 +69,10 @@ export default function DashboardPage() {
 
       <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Today&apos;s Summary</h2>
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <StatCard icon={<Dumbbell className="w-5 h-5 text-primary" />} label="Exercises" value={totalExercises.toString()} bg="bg-green-50" />
-        <StatCard icon={<Activity className="w-5 h-5 text-blue-500" />} label="Total Sets" value={totalSets.toString()} bg="bg-blue-50" />
-        <StatCard icon={<Flame className="w-5 h-5 text-orange-500" />} label="Calories" value={`${totalCalories} kcal`} bg="bg-orange-50" />
-        <StatCard icon={<TrendingUp className="w-5 h-5 text-purple-500" />} label="This Week" value={`${weekSessions.length} sessions`} bg="bg-purple-50" />
+        <StatCard icon={<Dumbbell className="w-5 h-5 text-primary" />} label="Exercises" value={stats.exercises.toString()} bg="bg-green-50" />
+        <StatCard icon={<Activity className="w-5 h-5 text-blue-500" />} label="Total Sets" value={stats.sets.toString()} bg="bg-blue-50" />
+        <StatCard icon={<Flame className="w-5 h-5 text-orange-500" />} label="Calories" value={`${stats.calories} kcal`} bg="bg-orange-50" />
+        <StatCard icon={<TrendingUp className="w-5 h-5 text-purple-500" />} label="This Week" value={`${stats.weekSessions} sessions`} bg="bg-purple-50" />
       </div>
 
       {topProgress && topProgress.diff > 0 && (
@@ -70,9 +82,7 @@ export default function DashboardPage() {
             <CardContent className="p-4">
               <p className="text-sm opacity-90 mb-1">Best Progress</p>
               <p className="font-bold text-lg">{topProgress.exercise}</p>
-              <Badge className="bg-white/20 text-white border-0 text-sm font-bold mt-2">
-                +{topProgress.diff} KG ✅
-              </Badge>
+              <Badge className="bg-white/20 text-white border-0 text-sm font-bold mt-2">+{topProgress.diff} KG ✅</Badge>
             </CardContent>
           </Card>
         </div>
@@ -82,14 +92,14 @@ export default function DashboardPage() {
         <div>
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Today&apos;s Workout</h2>
           <div className="space-y-2">
-            {todaySessions.map(session => (
+            {todaySessions.map((session: any) => (
               <Card key={session.id} className="border-0 shadow-sm">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <Badge variant="secondary" className="text-xs">{session.muscle_group}</Badge>
-                    <span className="text-xs text-gray-400">{session.exercises.length} exercises</span>
+                    <span className="text-xs text-gray-400">{session.exercise_logs?.length || 0} exercises</span>
                   </div>
-                  {session.exercises.slice(0, 3).map(ex => (
+                  {session.exercise_logs?.slice(0, 3).map((ex: any) => (
                     <div key={ex.id} className="flex justify-between text-sm py-1 border-b border-gray-50 last:border-0">
                       <span className="text-gray-700 truncate flex-1">{ex.exercise_name}</span>
                       <span className="text-gray-500 ml-2 shrink-0">{ex.weight}{ex.unit} · {ex.sets}×{ex.reps}</span>

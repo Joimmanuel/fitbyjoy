@@ -9,13 +9,15 @@ import { Progress } from '@/components/ui/progress'
 import { toast } from 'sonner'
 import { Plus, Trash2, Loader2, Flame, Search } from 'lucide-react'
 import { estimateCalories } from '@/lib/constants'
-import { getNutritionLogs, saveNutritionLog, deleteNutritionLog, getSettings, generateId } from '@/lib/storage'
-import { NutritionLog } from '@/types'
+import { createClient } from '@/lib/supabase/client'
+import { useUser } from '@/components/layout/UserProvider'
 import { format } from 'date-fns'
 
 export default function NutritionPage() {
+  const { userId } = useUser()
+  const supabase = createClient()
   const today = format(new Date(), 'yyyy-MM-dd')
-  const [logs, setLogs] = useState<NutritionLog[]>([])
+  const [logs, setLogs] = useState<any[]>([])
   const [targetCalories, setTargetCalories] = useState(2000)
   const [foodName, setFoodName] = useState('')
   const [quantity, setQuantity] = useState('1')
@@ -23,42 +25,42 @@ export default function NutritionPage() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    setLogs(getNutritionLogs().filter(n => n.date === today))
-    setTargetCalories(getSettings().target_calories)
-  }, [today])
+    if (!userId) return
+    async function load() {
+      const [logsRes, profileRes] = await Promise.all([
+        supabase.from('nutrition_logs').select('*').eq('user_id', userId).eq('date', today).order('created_at'),
+        supabase.from('profiles').select('target_calories').eq('id', userId).single(),
+      ])
+      setLogs(logsRes.data || [])
+      setTargetCalories(profileRes.data?.target_calories || 2000)
+    }
+    load()
+  }, [userId])
 
   const totalCalories = logs.reduce((a, l) => a + l.calories, 0)
   const progress = Math.min((totalCalories / targetCalories) * 100, 100)
 
-  function handleFoodChange(val: string) {
-    setFoodName(val)
-    setEstimatedCal(val.length > 2 ? estimateCalories(val) : null)
-  }
-
-  function handleAdd(e: React.FormEvent) {
+  async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
-    if (!foodName.trim()) return
+    if (!foodName.trim() || !userId) return
     setLoading(true)
     const calories = estimateCalories(foodName) * parseInt(quantity || '1')
-    const log: NutritionLog = {
-      id: generateId(),
-      date: today,
-      food_name: foodName.trim(),
-      quantity: parseInt(quantity || '1'),
-      calories,
+    const { data, error } = await supabase.from('nutrition_logs').insert({
+      user_id: userId, date: today, food_name: foodName.trim(),
+      quantity: parseInt(quantity || '1'), calories,
+    }).select().single()
+    if (error) { toast.error('Failed to add food') }
+    else {
+      setLogs(prev => [...prev, data])
+      setFoodName(''); setQuantity('1'); setEstimatedCal(null)
+      toast.success(`Added ${foodName} (${calories} kcal)`)
     }
-    saveNutritionLog(log)
-    setLogs(getNutritionLogs().filter(n => n.date === today))
-    setFoodName('')
-    setQuantity('1')
-    setEstimatedCal(null)
-    toast.success(`Added ${foodName} (${calories} kcal)`)
     setLoading(false)
   }
 
-  function handleDelete(id: string) {
-    deleteNutritionLog(id)
-    setLogs(getNutritionLogs().filter(n => n.date === today))
+  async function handleDelete(id: string) {
+    await supabase.from('nutrition_logs').delete().eq('id', id)
+    setLogs(prev => prev.filter(l => l.id !== id))
     toast.success('Removed')
   }
 
@@ -94,7 +96,7 @@ export default function NutritionPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input className="pl-9" placeholder="e.g. Nasi Ayam, Pisang..."
-                  value={foodName} onChange={e => handleFoodChange(e.target.value)} />
+                  value={foodName} onChange={e => { setFoodName(e.target.value); setEstimatedCal(e.target.value.length > 2 ? estimateCalories(e.target.value) : null) }} />
               </div>
               {estimatedCal && <p className="text-xs text-green-600 font-medium">≈ {estimatedCal} kcal per serving</p>}
             </div>
@@ -114,10 +116,7 @@ export default function NutritionPage() {
         <Card className="border-0 shadow-sm">
           <CardContent className="p-0">
             <div className="grid grid-cols-[1fr_auto_auto_auto] text-xs font-semibold text-gray-500 px-4 py-2 border-b bg-gray-50 rounded-t-xl">
-              <span>Food</span>
-              <span className="text-center px-2">Qty</span>
-              <span className="text-right px-2">Calories</span>
-              <span></span>
+              <span>Food</span><span className="text-center px-2">Qty</span><span className="text-right px-2">Calories</span><span></span>
             </div>
             {logs.map(log => (
               <div key={log.id} className="grid grid-cols-[1fr_auto_auto_auto] items-center px-4 py-3 border-b last:border-0">
@@ -128,10 +127,8 @@ export default function NutritionPage() {
               </div>
             ))}
             <div className="grid grid-cols-[1fr_auto_auto_auto] items-center px-4 py-3 bg-orange-50 rounded-b-xl">
-              <span className="text-sm font-bold text-gray-800">Total</span>
-              <span></span>
-              <span className="text-sm font-bold text-orange-600 text-right px-2">{totalCalories} kcal</span>
-              <span></span>
+              <span className="text-sm font-bold text-gray-800">Total</span><span></span>
+              <span className="text-sm font-bold text-orange-600 text-right px-2">{totalCalories} kcal</span><span></span>
             </div>
           </CardContent>
         </Card>

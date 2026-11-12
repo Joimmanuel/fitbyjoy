@@ -1,14 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getWorkouts } from '@/lib/storage'
-import { WorkoutSession } from '@/types'
+import { createClient } from '@/lib/supabase/client'
+import { useUser } from '@/components/layout/UserProvider'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { format, subMonths } from 'date-fns'
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 interface ExerciseData {
   exercise_name: string
@@ -28,45 +26,43 @@ const FILTERS = [
 ]
 
 export default function ProgressPage() {
+  const { userId } = useUser()
   const [exercises, setExercises] = useState<ExerciseData[]>([])
   const [selected, setSelected] = useState('')
   const [filter, setFilter] = useState(3)
 
   useEffect(() => {
-    const workouts = getWorkouts()
-    const exMap: Record<string, { date: string; weight: number; unit: string }[]> = {}
-    workouts.forEach(session => {
-      session.exercises.forEach(ex => {
-        if (!exMap[ex.exercise_name]) exMap[ex.exercise_name] = []
-        exMap[ex.exercise_name].push({ date: session.date, weight: ex.weight, unit: ex.unit })
+    if (!userId) return
+    const supabase = createClient()
+    async function load() {
+      const { data } = await supabase
+        .from('exercise_logs')
+        .select('exercise_name, weight, unit, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: true })
+
+      const exMap: Record<string, { date: string; weight: number; unit: string }[]> = {}
+      data?.forEach((log: any) => {
+        if (!exMap[log.exercise_name]) exMap[log.exercise_name] = []
+        exMap[log.exercise_name].push({ date: log.created_at.split('T')[0], weight: log.weight, unit: log.unit })
       })
-    })
-    const data = Object.entries(exMap).map(([name, history]) => {
-      const sorted = history.sort((a, b) => a.date.localeCompare(b.date))
-      const current = sorted[sorted.length - 1]?.weight || 0
-      const last = sorted.length >= 2 ? sorted[sorted.length - 2]?.weight : current
-      return {
-        exercise_name: name,
-        history: sorted,
-        current,
-        last,
-        diff: parseFloat((current - last).toFixed(2)),
-        unit: sorted[sorted.length - 1]?.unit || 'KG',
-      }
-    }).sort((a, b) => b.history.length - a.history.length)
-    setExercises(data)
-    if (data.length > 0) setSelected(data[0].exercise_name)
-  }, [])
+
+      const result = Object.entries(exMap).map(([name, history]) => {
+        const sorted = history.sort((a, b) => a.date.localeCompare(b.date))
+        const current = sorted[sorted.length - 1]?.weight || 0
+        const last = sorted.length >= 2 ? sorted[sorted.length - 2]?.weight : current
+        return { exercise_name: name, history: sorted, current, last, diff: parseFloat((current - last).toFixed(2)), unit: sorted[sorted.length - 1]?.unit || 'KG' }
+      }).sort((a, b) => b.history.length - a.history.length)
+
+      setExercises(result)
+      if (result.length > 0) setSelected(result[0].exercise_name)
+    }
+    load()
+  }, [userId])
 
   const exercise = exercises.find(e => e.exercise_name === selected)
-  const filteredHistory = exercise?.history.filter(h => {
-    if (filter === 0) return true
-    return new Date(h.date) >= subMonths(new Date(), filter)
-  }) || []
-  const chartData = filteredHistory.map(h => ({
-    date: format(new Date(h.date + 'T00:00:00'), 'dd/MM'),
-    weight: h.weight,
-  }))
+  const filteredHistory = exercise?.history.filter(h => filter === 0 || new Date(h.date) >= subMonths(new Date(), filter)) || []
+  const chartData = filteredHistory.map(h => ({ date: format(new Date(h.date + 'T00:00:00'), 'dd/MM'), weight: h.weight }))
 
   if (exercises.length === 0) {
     return (
@@ -88,9 +84,7 @@ export default function ProgressPage() {
       <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
         {exercises.map(ex => (
           <button key={ex.exercise_name} onClick={() => setSelected(ex.exercise_name)}
-            className={`shrink-0 text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
-              selected === ex.exercise_name ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'
-            }`}>
+            className={`shrink-0 text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${selected === ex.exercise_name ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'}`}>
             {ex.exercise_name}
           </button>
         ))}
@@ -99,32 +93,24 @@ export default function ProgressPage() {
       {exercise && (
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-2">
-            <Card className="border-0 shadow-sm">
-              <CardContent className="p-3 text-center">
-                <p className="text-xs text-gray-500 mb-1">Current</p>
-                <p className="font-bold text-gray-900">{exercise.current} {exercise.unit}</p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-sm">
-              <CardContent className="p-3 text-center">
-                <p className="text-xs text-gray-500 mb-1">Last</p>
-                <p className="font-bold text-gray-900">{exercise.last} {exercise.unit}</p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-sm">
-              <CardContent className="p-3 text-center">
-                <p className="text-xs text-gray-500 mb-1">Progress</p>
-                <div className="flex items-center justify-center gap-1">
-                  {exercise.diff > 0 ? <TrendingUp className="w-3 h-3 text-green-500" /> :
-                    exercise.diff < 0 ? <TrendingDown className="w-3 h-3 text-red-500" /> :
-                    <Minus className="w-3 h-3 text-gray-400" />}
-                  <span className={`font-bold text-sm ${exercise.diff > 0 ? 'text-green-600' : exercise.diff < 0 ? 'text-red-500' : 'text-gray-500'}`}>
-                    {exercise.diff > 0 ? '+' : ''}{exercise.diff}
-                  </span>
-                  <span>{exercise.diff > 0 ? '✅' : exercise.diff < 0 ? '🔻' : ''}</span>
-                </div>
-              </CardContent>
-            </Card>
+            <Card className="border-0 shadow-sm"><CardContent className="p-3 text-center">
+              <p className="text-xs text-gray-500 mb-1">Current</p>
+              <p className="font-bold text-gray-900">{exercise.current} {exercise.unit}</p>
+            </CardContent></Card>
+            <Card className="border-0 shadow-sm"><CardContent className="p-3 text-center">
+              <p className="text-xs text-gray-500 mb-1">Last</p>
+              <p className="font-bold text-gray-900">{exercise.last} {exercise.unit}</p>
+            </CardContent></Card>
+            <Card className="border-0 shadow-sm"><CardContent className="p-3 text-center">
+              <p className="text-xs text-gray-500 mb-1">Progress</p>
+              <div className="flex items-center justify-center gap-1">
+                {exercise.diff > 0 ? <TrendingUp className="w-3 h-3 text-green-500" /> : exercise.diff < 0 ? <TrendingDown className="w-3 h-3 text-red-500" /> : <Minus className="w-3 h-3 text-gray-400" />}
+                <span className={`font-bold text-sm ${exercise.diff > 0 ? 'text-green-600' : exercise.diff < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                  {exercise.diff > 0 ? '+' : ''}{exercise.diff}
+                </span>
+                <span>{exercise.diff > 0 ? '✅' : exercise.diff < 0 ? '🔻' : ''}</span>
+              </div>
+            </CardContent></Card>
           </div>
 
           <Card className="border-0 shadow-sm">
@@ -149,14 +135,11 @@ export default function ProgressPage() {
                     <XAxis dataKey="date" tick={{ fontSize: 10 }} />
                     <YAxis tick={{ fontSize: 10 }} domain={['auto', 'auto']} />
                     <Tooltip formatter={v => [`${v} ${exercise.unit}`, 'Weight']} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                    <Line type="monotone" dataKey="weight" stroke="#16a34a" strokeWidth={2.5}
-                      dot={{ fill: '#16a34a', r: 4 }} activeDot={{ r: 6 }} />
+                    <Line type="monotone" dataKey="weight" stroke="#16a34a" strokeWidth={2.5} dot={{ fill: '#16a34a', r: 4 }} activeDot={{ r: 6 }} />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-[200px] flex items-center justify-center text-gray-400 text-sm">
-                  Not enough data for this period
-                </div>
+                <div className="h-[200px] flex items-center justify-center text-gray-400 text-sm">Not enough data for this period</div>
               )}
             </CardContent>
           </Card>

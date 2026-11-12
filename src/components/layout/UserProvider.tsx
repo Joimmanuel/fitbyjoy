@@ -1,0 +1,34 @@
+'use client'
+
+import { createContext, useContext } from 'react'
+import { useAnonSession } from '@/hooks/useAnonSession'
+import { Dumbbell } from 'lucide-react'
+
+const UserContext = createContext<{ userId: string | null }>({ userId: null })
+
+export function useUser() {
+  return useContext(UserContext)
+}
+
+export default function UserProvider({ children }: { children: React.ReactNode }) {
+  const { userId, ready } = useAnonSession()
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center animate-pulse">
+            <Dumbbell className="w-7 h-7 text-white" />
+          </div>
+          <p className="text-sm text-gray-400">Loading Joy Fit...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <UserContext.Provider value={{ userId }}>
+      {children}
+    </UserContext.Provider>
+  )
+}

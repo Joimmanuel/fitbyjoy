@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,8 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import { Plus, Trash2, Loader2, Dumbbell, ChevronRight } from 'lucide-react'
 import { MUSCLE_GROUPS, EXERCISE_RECOMMENDATIONS, MUSCLE_GROUP_COLORS } from '@/lib/constants'
-import { MuscleGroup, WeightUnit, WorkoutSession, ExerciseLog } from '@/types'
-import { saveWorkout, getWorkouts, generateId } from '@/lib/storage'
+import { MuscleGroup, WeightUnit } from '@/types'
+import { createClient } from '@/lib/supabase/client'
+import { useUser } from '@/components/layout/UserProvider'
 import { format } from 'date-fns'
 
 interface ExerciseEntry {
@@ -26,13 +27,30 @@ interface ExerciseEntry {
 const emptyEntry = (): ExerciseEntry => ({ exercise_name: '', weight: '', unit: 'KG', sets: '', reps: '' })
 
 export default function WorkoutPage() {
+  const { userId } = useUser()
+  const supabase = createClient()
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [muscleGroup, setMuscleGroup] = useState<MuscleGroup | ''>('')
   const [exercises, setExercises] = useState<ExerciseEntry[]>([emptyEntry()])
   const [loading, setLoading] = useState(false)
-  const [sessions, setSessions] = useState<WorkoutSession[]>(() => getWorkouts())
+  const [sessions, setSessions] = useState<any[]>([])
 
   const recommendations = muscleGroup ? EXERCISE_RECOMMENDATIONS[muscleGroup as MuscleGroup] : []
+
+  useEffect(() => {
+    if (!userId) return
+    loadSessions()
+  }, [userId])
+
+  async function loadSessions() {
+    const { data } = await supabase
+      .from('workout_sessions')
+      .select('*, exercise_logs(*)')
+      .eq('user_id', userId)
+      .order('date', { ascending: false })
+      .limit(30)
+    setSessions(data || [])
+  }
 
   function updateExercise(idx: number, field: keyof ExerciseEntry, value: string) {
     setExercises(prev => prev.map((e, i) => i === idx ? { ...e, [field]: value } : e))
@@ -44,31 +62,37 @@ export default function WorkoutPage() {
     else setExercises(prev => [...prev, { ...emptyEntry(), exercise_name: name }])
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!muscleGroup) return toast.error('Please select a muscle group')
+    if (!muscleGroup || !userId) return toast.error('Please select a muscle group')
     const valid = exercises.filter(ex => ex.exercise_name && ex.weight && ex.sets && ex.reps)
     if (valid.length === 0) return toast.error('Add at least one exercise')
     setLoading(true)
-    const session: WorkoutSession = {
-      id: generateId(),
-      date,
-      muscle_group: muscleGroup as MuscleGroup,
-      exercises: valid.map(ex => ({
-        id: generateId(),
+
+    const { data: session, error } = await supabase
+      .from('workout_sessions')
+      .insert({ user_id: userId, date, muscle_group: muscleGroup })
+      .select().single()
+
+    if (error || !session) { toast.error('Failed to save'); setLoading(false); return }
+
+    await supabase.from('exercise_logs').insert(
+      valid.map(ex => ({
+        session_id: session.id,
+        user_id: userId,
         exercise_name: ex.exercise_name,
         weight: parseFloat(ex.weight),
         unit: ex.unit,
         sets: parseInt(ex.sets),
         reps: parseInt(ex.reps),
-      } as ExerciseLog)),
-    }
-    saveWorkout(session)
-    setSessions(getWorkouts())
+      }))
+    )
+
     toast.success('Workout saved! 💪')
     setMuscleGroup('')
     setExercises([emptyEntry()])
     setDate(format(new Date(), 'yyyy-MM-dd'))
+    loadSessions()
     setLoading(false)
   }
 
@@ -196,8 +220,8 @@ export default function WorkoutPage() {
             </div>
           ) : (
             <div className="space-y-3 pb-4">
-              {sessions.map(session => {
-                const color = MUSCLE_GROUP_COLORS[session.muscle_group] || '#6b7280'
+              {sessions.map((session: any) => {
+                const color = MUSCLE_GROUP_COLORS[session.muscle_group as MuscleGroup] || '#6b7280'
                 return (
                   <Card key={session.id} className="border-0 shadow-sm overflow-hidden">
                     <div className="h-1" style={{ backgroundColor: color }} />
@@ -210,9 +234,9 @@ export default function WorkoutPage() {
                           <Badge variant="secondary" className="text-xs mt-1"
                             style={{ backgroundColor: `${color}20`, color }}>{session.muscle_group}</Badge>
                         </div>
-                        <span className="text-sm text-gray-400">{session.exercises.length} exercises</span>
+                        <span className="text-sm text-gray-400">{session.exercise_logs?.length || 0} exercises</span>
                       </div>
-                      {session.exercises.map(ex => (
+                      {session.exercise_logs?.map((ex: any) => (
                         <div key={ex.id} className="flex justify-between text-sm py-1 border-b last:border-0">
                           <span className="text-gray-700 truncate flex-1">{ex.exercise_name}</span>
                           <span className="text-gray-500 ml-2 shrink-0 text-xs">{ex.weight}{ex.unit} · {ex.sets}×{ex.reps}</span>

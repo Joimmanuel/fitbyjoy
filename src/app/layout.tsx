@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Geist } from 'next/font/google'
 import './globals.css'
 import { Toaster } from '@/components/ui/sonner'
+import UserProvider from '@/components/layout/UserProvider'
 
 const geist = Geist({ subsets: ['latin'] })
 
@@ -21,7 +22,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={geist.className}>
-        {children}
+        <UserProvider>
+          {children}
+        </UserProvider>
         <Toaster position="top-center" richColors />
       </body>
     </html>

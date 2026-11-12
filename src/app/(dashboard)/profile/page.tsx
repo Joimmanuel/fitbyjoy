@@ -8,41 +8,55 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { toast } from 'sonner'
 import { Loader2, Scale, Target, User } from 'lucide-react'
-import { getSettings, saveSettings, getBodyWeightLogs, saveBodyWeightLog, generateId } from '@/lib/storage'
-import { BodyWeightLog } from '@/types'
+import { createClient } from '@/lib/supabase/client'
+import { useUser } from '@/components/layout/UserProvider'
 import { format } from 'date-fns'
 
 export default function ProfilePage() {
+  const { userId } = useUser()
+  const supabase = createClient()
   const [name, setName] = useState('')
   const [targetCalories, setTargetCalories] = useState('2000')
-  const [logs, setLogs] = useState<BodyWeightLog[]>([])
+  const [logs, setLogs] = useState<any[]>([])
   const [weightDate, setWeightDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [bodyWeight, setBodyWeight] = useState('')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    const settings = getSettings()
-    setName(settings.name)
-    setTargetCalories(settings.target_calories.toString())
-    setLogs(getBodyWeightLogs().slice(0, 10))
-  }, [])
+    if (!userId) return
+    async function load() {
+      const [profileRes, logsRes] = await Promise.all([
+        supabase.from('profiles').select('name, target_calories').eq('id', userId).single(),
+        supabase.from('body_weight_logs').select('*').eq('user_id', userId).order('date', { ascending: false }).limit(10),
+      ])
+      setName(profileRes.data?.name || '')
+      setTargetCalories(profileRes.data?.target_calories?.toString() || '2000')
+      setLogs(logsRes.data || [])
+    }
+    load()
+  }, [userId])
 
-  function handleSaveProfile(e: React.FormEvent) {
+  async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault()
+    if (!userId) return
     setSaving(true)
-    saveSettings({ name, target_calories: parseInt(targetCalories) })
+    await supabase.from('profiles').upsert({ id: userId, name, target_calories: parseInt(targetCalories) }, { onConflict: 'id' })
     toast.success('Profile updated!')
     setSaving(false)
   }
 
-  function handleSaveWeight(e: React.FormEvent) {
+  async function handleSaveWeight(e: React.FormEvent) {
     e.preventDefault()
-    if (!bodyWeight) return
-    const log: BodyWeightLog = { id: generateId(), date: weightDate, weight: parseFloat(bodyWeight) }
-    saveBodyWeightLog(log)
-    setLogs(getBodyWeightLogs().slice(0, 10))
-    setBodyWeight('')
-    toast.success('Weight saved! 💪')
+    if (!bodyWeight || !userId) return
+    const { data, error } = await supabase.from('body_weight_logs')
+      .insert({ user_id: userId, date: weightDate, weight: parseFloat(bodyWeight) })
+      .select().single()
+    if (error) { toast.error('Failed to save weight') }
+    else {
+      setLogs(prev => [data, ...prev].slice(0, 10))
+      setBodyWeight('')
+      toast.success('Weight saved! 💪')
+    }
   }
 
   const initials = name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'JF'
@@ -131,7 +145,7 @@ export default function ProfilePage() {
           {logs.length > 0 && (
             <div className="space-y-1.5">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Recent</p>
-              {logs.slice(0, 5).map(log => (
+              {logs.slice(0, 5).map((log: any) => (
                 <div key={log.id} className="flex justify-between items-center py-2 border-b last:border-0">
                   <span className="text-sm text-gray-600">{format(new Date(log.date + 'T00:00:00'), 'dd MMM yyyy')}</span>
                   <span className="font-semibold text-gray-900">{log.weight} KG</span>
