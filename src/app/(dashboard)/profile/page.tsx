@@ -17,6 +17,7 @@ export default function ProfilePage() {
   const supabase = createClient()
   const [name, setName] = useState('')
   const [targetCalories, setTargetCalories] = useState('2000')
+  const [weeklyGoal, setWeeklyGoal] = useState('4')
   const [logs, setLogs] = useState<any[]>([])
   const [weightDate, setWeightDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [bodyWeight, setBodyWeight] = useState('')
@@ -26,11 +27,12 @@ export default function ProfilePage() {
     if (!userId) return
     async function load() {
       const [profileRes, logsRes] = await Promise.all([
-        supabase.from('profiles').select('name, target_calories').eq('id', userId).single(),
+        supabase.from('profiles').select('name, target_calories, weekly_goal').eq('id', userId).single(),
         supabase.from('body_weight_logs').select('*').eq('user_id', userId).order('date', { ascending: false }).limit(10),
       ])
       setName(profileRes.data?.name || '')
       setTargetCalories(profileRes.data?.target_calories?.toString() || '2000')
+      setWeeklyGoal(profileRes.data?.weekly_goal?.toString() || '4')
       setLogs(logsRes.data || [])
     }
     load()
@@ -40,7 +42,7 @@ export default function ProfilePage() {
     e.preventDefault()
     if (!userId) return
     setSaving(true)
-    await supabase.from('profiles').upsert({ id: userId, name, target_calories: parseInt(targetCalories) }, { onConflict: 'id' })
+    await supabase.from('profiles').upsert({ id: userId, name, target_calories: parseInt(targetCalories), weekly_goal: parseInt(weeklyGoal) }, { onConflict: 'id' })
     toast.success('Profile updated!')
     setSaving(false)
   }
@@ -116,6 +118,12 @@ export default function ProfilePage() {
                 <Target className="w-3.5 h-3.5" /> Daily Calorie Target
               </Label>
               <Input type="number" value={targetCalories} onChange={e => setTargetCalories(e.target.value)} min="500" max="10000" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5">
+                <Target className="w-3.5 h-3.5" /> Weekly Workout Goal
+              </Label>
+              <Input type="number" value={weeklyGoal} onChange={e => setWeeklyGoal(e.target.value)} min="1" max="7" />
             </div>
             <Button type="submit" className="w-full" disabled={saving}>
               {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}

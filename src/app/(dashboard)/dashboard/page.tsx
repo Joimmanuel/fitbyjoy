@@ -3,17 +3,20 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Dumbbell, Flame, TrendingUp, Activity } from 'lucide-react'
-import { format, startOfWeek, endOfWeek } from 'date-fns'
+import { Progress } from '@/components/ui/progress'
+import { Dumbbell, Flame, TrendingUp, Activity, Zap, Target } from 'lucide-react'
+import { format, startOfWeek, endOfWeek, subDays } from 'date-fns'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/components/layout/UserProvider'
 
 export default function DashboardPage() {
   const { userId } = useUser()
-  const [stats, setStats] = useState({ exercises: 0, sets: 0, calories: 0, weekSessions: 0 })
+  const [stats, setStats] = useState({ exercises: 0, sets: 0, calories: 0, weekSessions: 0, weekVolume: 0 })
   const [todaySessions, setTodaySessions] = useState<any[]>([])
   const [topProgress, setTopProgress] = useState<{ exercise: string; diff: number } | null>(null)
   const [name, setName] = useState('Athlete')
+  const [streak, setStreak] = useState(0)
+  const [weeklyGoal, setWeeklyGoal] = useState(4)
 
   useEffect(() => {
     if (!userId) return
@@ -23,32 +26,54 @@ export default function DashboardPage() {
     const weekEnd = format(endOfWeek(new Date()), 'yyyy-MM-dd')
 
     async function load() {
-      const [profileRes, todayRes, nutritionRes, weekRes, logsRes] = await Promise.all([
-        supabase.from('profiles').select('name').eq('id', userId).single(),
+      const [profileRes, todayRes, nutritionRes, weekRes, logsRes, allSessionsRes] = await Promise.all([
+        supabase.from('profiles').select('name, weekly_goal').eq('id', userId).single(),
         supabase.from('workout_sessions').select('*, exercise_logs(*)').eq('user_id', userId).eq('date', today),
         supabase.from('nutrition_logs').select('calories').eq('user_id', userId).eq('date', today),
-        supabase.from('workout_sessions').select('id').eq('user_id', userId).gte('date', weekStart).lte('date', weekEnd),
-        supabase.from('exercise_logs').select('exercise_name, weight, created_at').eq('user_id', userId).gte('created_at', new Date(startOfWeek(new Date())).toISOString()).order('created_at'),
+        supabase.from('workout_sessions').select('id, date').eq('user_id', userId).gte('date', weekStart).lte('date', weekEnd),
+        supabase.from('exercise_logs').select('exercise_name, weight, sets, reps, created_at').eq('user_id', userId).gte('created_at', new Date(startOfWeek(new Date())).toISOString()).order('created_at'),
+        supabase.from('workout_sessions').select('date').eq('user_id', userId).order('date', { ascending: false }).limit(60),
       ])
 
       setName(profileRes.data?.name || 'Athlete')
+      setWeeklyGoal(profileRes.data?.weekly_goal || 4)
       setTodaySessions(todayRes.data || [])
 
       const totalExercises = (todayRes.data || []).reduce((a: number, s: any) => a + (s.exercise_logs?.length || 0), 0)
       const totalSets = (todayRes.data || []).reduce((a: number, s: any) => a + (s.exercise_logs?.reduce((b: number, e: any) => b + e.sets, 0) || 0), 0)
       const totalCalories = (nutritionRes.data || []).reduce((a: number, n: any) => a + n.calories, 0)
-      setStats({ exercises: totalExercises, sets: totalSets, calories: totalCalories, weekSessions: weekRes.data?.length || 0 })
 
+      // Weekly volume = sum of (weight × sets × reps) for this week
+      const weekVolume = (logsRes.data || []).reduce((a: number, l: any) => a + (l.weight * l.sets * l.reps), 0)
+
+      setStats({ exercises: totalExercises, sets: totalSets, calories: totalCalories, weekSessions: weekRes.data?.length || 0, weekVolume: Math.round(weekVolume) })
+
+      // Calculate streak
+      const sessionDates = new Set((allSessionsRes.data || []).map((s: any) => s.date))
+      let currentStreak = 0
+      let checkDate = new Date()
+      // If no workout today, start checking from yesterday
+      if (!sessionDates.has(today)) checkDate = subDays(checkDate, 1)
+      while (true) {
+        const dateStr = format(checkDate, 'yyyy-MM-dd')
+        if (sessionDates.has(dateStr)) {
+          currentStreak++
+          checkDate = subDays(checkDate, 1)
+        } else break
+      }
+      setStreak(currentStreak)
+
+      // Top progress this week
       const exMap: Record<string, number[]> = {}
       logsRes.data?.forEach((l: any) => {
         if (!exMap[l.exercise_name]) exMap[l.exercise_name] = []
         exMap[l.exercise_name].push(l.weight)
       })
       let top: { exercise: string; diff: number } | null = null
-      for (const [name, weights] of Object.entries(exMap)) {
+      for (const [exName, weights] of Object.entries(exMap)) {
         if (weights.length >= 2) {
           const diff = weights[weights.length - 1] - weights[0]
-          if (!top || diff > top.diff) top = { exercise: name, diff }
+          if (!top || diff > top.diff) top = { exercise: exName, diff }
         }
       }
       setTopProgress(top)
@@ -58,23 +83,56 @@ export default function DashboardPage() {
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+  const weeklyProgress = Math.min((stats.weekSessions / weeklyGoal) * 100, 100)
+  const weeklyDone = stats.weekSessions >= weeklyGoal
 
   return (
     <div className="px-4 pt-6 pb-4">
+      {/* Header */}
       <div className="mb-6">
         <p className="text-sm text-gray-500">{greeting} 👋</p>
         <h1 className="text-2xl font-bold text-gray-900">{name}</h1>
         <p className="text-sm text-gray-400">{format(new Date(), 'EEEE, dd MMMM yyyy')}</p>
       </div>
 
+      {/* Streak + Weekly Goal */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <Card className="border-0 shadow-sm bg-gradient-to-br from-orange-400 to-red-500 text-white">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Zap className="w-4 h-4" />
+              <span className="text-xs font-semibold opacity-90">Workout Streak</span>
+            </div>
+            <p className="text-3xl font-bold">{streak}</p>
+            <p className="text-xs opacity-80">{streak === 1 ? 'day' : 'days'} in a row 🔥</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Target className="w-4 h-4 text-primary" />
+              <span className="text-xs font-semibold text-gray-600">Weekly Goal</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">
+              {stats.weekSessions}<span className="text-sm text-gray-400 font-normal">/{weeklyGoal}</span>
+            </p>
+            <Progress value={weeklyProgress} className="h-1.5 mt-2" />
+            <p className="text-xs text-gray-400 mt-1">{weeklyDone ? '✅ Goal reached!' : `${weeklyGoal - stats.weekSessions} more to go`}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Today's Stats */}
       <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Today&apos;s Summary</h2>
       <div className="grid grid-cols-2 gap-3 mb-6">
         <StatCard icon={<Dumbbell className="w-5 h-5 text-primary" />} label="Exercises" value={stats.exercises.toString()} bg="bg-green-50" />
         <StatCard icon={<Activity className="w-5 h-5 text-blue-500" />} label="Total Sets" value={stats.sets.toString()} bg="bg-blue-50" />
         <StatCard icon={<Flame className="w-5 h-5 text-orange-500" />} label="Calories" value={`${stats.calories} kcal`} bg="bg-orange-50" />
-        <StatCard icon={<TrendingUp className="w-5 h-5 text-purple-500" />} label="This Week" value={`${stats.weekSessions} sessions`} bg="bg-purple-50" />
+        <StatCard icon={<TrendingUp className="w-5 h-5 text-purple-500" />} label="Week Volume" value={`${stats.weekVolume.toLocaleString()} kg`} bg="bg-purple-50" />
       </div>
 
+      {/* Top Progress */}
       {topProgress && topProgress.diff > 0 && (
         <div className="mb-6">
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">🏆 Top Improvement This Week</h2>
@@ -88,6 +146,7 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Today's Workout */}
       {todaySessions.length > 0 ? (
         <div>
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Today&apos;s Workout</h2>
