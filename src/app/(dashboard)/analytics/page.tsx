@@ -142,7 +142,7 @@ export default function AnalyticsPage() {
                 <XAxis dataKey="week" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
                 <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                <Bar dataKey="count" fill="#16a34a" radius={[4, 4, 0, 0]} name="Workouts" />
+                <Bar dataKey="count" fill="#00BFA5" radius={[4, 4, 0, 0]} name="Workouts" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

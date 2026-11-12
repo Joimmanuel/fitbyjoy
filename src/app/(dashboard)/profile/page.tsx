@@ -79,7 +79,7 @@ export default function ProfilePage() {
         <p className="text-sm text-gray-500">Manage your settings</p>
       </div>
 
-      <Card className="border-0 shadow-sm bg-gradient-to-r from-green-500 to-emerald-600 text-white">
+      <Card className="border-0 shadow-sm bg-gradient-to-r from-[#00BFA5] to-[#00897B] text-white">
         <CardContent className="p-5 flex items-center gap-4">
           <Avatar className="w-16 h-16 border-2 border-white/30">
             <AvatarFallback className="bg-white/20 text-white text-xl font-bold">{initials}</AvatarFallback>

@@ -110,8 +110,8 @@ export const MUSCLE_GROUP_COLORS: Record<MuscleGroup, string> = {
   Chest: '#ef4444',
   Back: '#3b82f6',
   Shoulder: '#f59e0b',
-  Leg: '#10b981',
+  Leg: '#00BFA5',
   Biceps: '#8b5cf6',
-  Triceps: '#ec4899',
-  'Full Body': '#06b6d4',
+  Triceps: '#1AD1B9',
+  'Full Body': '#00897B',
 }

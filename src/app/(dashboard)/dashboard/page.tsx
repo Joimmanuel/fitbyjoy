@@ -97,7 +97,7 @@ export default function DashboardPage() {
 
       {/* Streak + Weekly Goal */}
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <Card className="border-0 shadow-sm bg-gradient-to-br from-orange-400 to-red-500 text-white">
+        <Card className="border-0 shadow-sm bg-gradient-to-br from-[#FF6B35] to-[#e55a2b] text-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
               <Zap className="w-4 h-4" />
@@ -136,7 +136,7 @@ export default function DashboardPage() {
       {topProgress && topProgress.diff > 0 && (
         <div className="mb-6">
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">🏆 Top Improvement This Week</h2>
-          <Card className="border-0 shadow-sm bg-gradient-to-r from-green-500 to-emerald-600 text-white">
+          <Card className="border-0 shadow-sm bg-gradient-to-r from-[#00BFA5] to-[#00897B] text-white">
             <CardContent className="p-4">
               <p className="text-sm opacity-90 mb-1">Best Progress</p>
               <p className="font-bold text-lg">{topProgress.exercise}</p>

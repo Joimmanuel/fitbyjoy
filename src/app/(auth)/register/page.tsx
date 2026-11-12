@@ -31,11 +31,8 @@ export default function RegisterPage() {
     if (error) {
       toast.error(error.message)
     } else {
-      // Also migrate any localStorage data
       const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        await migrateLocalData(supabase, user.id, form.name)
-      }
+      if (user) await migrateLocalData(supabase, user.id, form.name)
       toast.success('Akun berhasil dibuat!')
       router.push('/dashboard')
       router.refresh()
@@ -71,20 +68,17 @@ export default function RegisterPage() {
           )
         }
       }
-
       for (const log of nutritionLogs) {
         await supabase.from('nutrition_logs').insert({
           user_id: userId, date: log.date, food_name: log.food_name,
           quantity: log.quantity, calories: log.calories,
         })
       }
-
       for (const log of bodyWeightLogs) {
         await supabase.from('body_weight_logs').insert({
           user_id: userId, date: log.date, weight: log.weight,
         })
       }
-
       localStorage.removeItem('joyfit_workouts')
       localStorage.removeItem('joyfit_nutrition')
       localStorage.removeItem('joyfit_bodyweight')
@@ -95,48 +89,52 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-3 shadow-lg">
-            <Dumbbell className="w-8 h-8 text-white" />
+    <div className="min-h-screen flex">
+      <div className="hidden sm:block w-2 bg-primary" />
+      <div className="flex-1 bg-white flex items-center justify-center p-6">
+        <div className="w-full max-w-sm">
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-3 shadow-lg shadow-primary/30">
+              <Dumbbell className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">Joy Fit</h1>
+            <p className="text-gray-400 text-sm mt-0.5">Personal Progress Tracker</p>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Joy Fit</h1>
-          <p className="text-gray-500 text-sm">Personal Progress Tracker</p>
+
+          <Card className="shadow-sm border border-gray-100">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg text-gray-900">Buat Akun 💪</CardTitle>
+              <CardDescription>Daftar sekali, akses dari mana saja</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleRegister} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label>Nama</Label>
+                  <Input placeholder="Joy" value={form.name}
+                    onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Email</Label>
+                  <Input type="email" placeholder="you@example.com" value={form.email}
+                    onChange={e => setForm(p => ({ ...p, email: e.target.value }))} required />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Password</Label>
+                  <Input type="password" placeholder="Min. 6 karakter" value={form.password}
+                    onChange={e => setForm(p => ({ ...p, password: e.target.value }))} minLength={6} required />
+                </div>
+                <Button type="submit" className="w-full font-semibold" disabled={loading}>
+                  {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                  Buat Akun
+                </Button>
+              </form>
+              <p className="text-center text-sm text-gray-500 mt-4">
+                Sudah punya akun?{' '}
+                <Link href="/login" className="text-primary font-semibold hover:underline">Sign in</Link>
+              </p>
+            </CardContent>
+          </Card>
         </div>
-        <Card className="shadow-xl border-0">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Buat Akun 💪</CardTitle>
-            <CardDescription>Daftar sekali, akses dari mana saja</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div className="space-y-1.5">
-                <Label>Nama</Label>
-                <Input placeholder="Joy" value={form.name}
-                  onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Email</Label>
-                <Input type="email" placeholder="you@example.com" value={form.email}
-                  onChange={e => setForm(p => ({ ...p, email: e.target.value }))} required />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Password</Label>
-                <Input type="password" placeholder="Min. 6 karakter" value={form.password}
-                  onChange={e => setForm(p => ({ ...p, password: e.target.value }))} minLength={6} required />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                Buat Akun
-              </Button>
-            </form>
-            <p className="text-center text-sm text-gray-500 mt-4">
-              Sudah punya akun?{' '}
-              <Link href="/login" className="text-primary font-medium">Sign in</Link>
-            </p>
-          </CardContent>
-        </Card>
       </div>
     </div>
   )

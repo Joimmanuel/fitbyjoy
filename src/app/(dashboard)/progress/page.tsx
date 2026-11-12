@@ -104,8 +104,8 @@ export default function ProgressPage() {
             <Card className="border-0 shadow-sm"><CardContent className="p-3 text-center">
               <p className="text-xs text-gray-500 mb-1">Progress</p>
               <div className="flex items-center justify-center gap-1">
-                {exercise.diff > 0 ? <TrendingUp className="w-3 h-3 text-green-500" /> : exercise.diff < 0 ? <TrendingDown className="w-3 h-3 text-red-500" /> : <Minus className="w-3 h-3 text-gray-400" />}
-                <span className={`font-bold text-sm ${exercise.diff > 0 ? 'text-green-600' : exercise.diff < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                {exercise.diff > 0 ? <TrendingUp className="w-3 h-3 text-[#00BFA5]" /> : exercise.diff < 0 ? <TrendingDown className="w-3 h-3 text-red-500" /> : <Minus className="w-3 h-3 text-gray-400" />}
+                <span className={`font-bold text-sm ${exercise.diff > 0 ? 'text-[#00BFA5]' : exercise.diff < 0 ? 'text-red-500' : 'text-gray-500'}`}>
                   {exercise.diff > 0 ? '+' : ''}{exercise.diff}
                 </span>
                 <span>{exercise.diff > 0 ? '✅' : exercise.diff < 0 ? '🔻' : ''}</span>
@@ -135,7 +135,7 @@ export default function ProgressPage() {
                     <XAxis dataKey="date" tick={{ fontSize: 10 }} />
                     <YAxis tick={{ fontSize: 10 }} domain={['auto', 'auto']} />
                     <Tooltip formatter={v => [`${v} ${exercise.unit}`, 'Weight']} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                    <Line type="monotone" dataKey="weight" stroke="#16a34a" strokeWidth={2.5} dot={{ fill: '#16a34a', r: 4 }} activeDot={{ r: 6 }} />
+                    <Line type="monotone" dataKey="weight" stroke="#00BFA5" strokeWidth={2.5} dot={{ fill: '#00BFA5', r: 4 }} activeDot={{ r: 6 }} />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (

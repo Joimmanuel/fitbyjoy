@@ -31,10 +31,10 @@ export default function UserProvider({ children }: { children: React.ReactNode }
 
   if (!ready) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center animate-pulse">
-            <Dumbbell className="w-7 h-7 text-white" />
+          <div className="w-14 h-14 bg-[#F5C518] rounded-2xl flex items-center justify-center animate-pulse">
+            <Dumbbell className="w-7 h-7 text-black" />
           </div>
           <p className="text-sm text-gray-400">Loading Joy Fit...</p>
         </div>

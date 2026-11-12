@@ -31,43 +31,50 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-3 shadow-lg">
-            <Dumbbell className="w-8 h-8 text-white" />
+    <div className="min-h-screen flex">
+      {/* Left accent bar */}
+      <div className="hidden sm:block w-2 bg-primary" />
+
+      <div className="flex-1 bg-white flex items-center justify-center p-6">
+        <div className="w-full max-w-sm">
+          {/* Logo */}
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-3 shadow-lg shadow-primary/30">
+              <Dumbbell className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">Joy Fit</h1>
+            <p className="text-gray-400 text-sm mt-0.5">Personal Progress Tracker</p>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Joy Fit</h1>
-          <p className="text-gray-500 text-sm">Personal Progress Tracker</p>
+
+          <Card className="shadow-sm border border-gray-100">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg text-gray-900">Welcome back 👋</CardTitle>
+              <CardDescription>Sign in to sync your data across devices</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label>Email</Label>
+                  <Input type="email" placeholder="you@example.com" value={form.email}
+                    onChange={e => setForm(p => ({ ...p, email: e.target.value }))} required />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Password</Label>
+                  <Input type="password" placeholder="••••••••" value={form.password}
+                    onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required />
+                </div>
+                <Button type="submit" className="w-full font-semibold" disabled={loading}>
+                  {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                  Sign In
+                </Button>
+              </form>
+              <p className="text-center text-sm text-gray-500 mt-4">
+                Belum punya akun?{' '}
+                <Link href="/register" className="text-primary font-semibold hover:underline">Daftar</Link>
+              </p>
+            </CardContent>
+          </Card>
         </div>
-        <Card className="shadow-xl border-0">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Welcome back 👋</CardTitle>
-            <CardDescription>Sign in to sync your data</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-1.5">
-                <Label>Email</Label>
-                <Input type="email" placeholder="you@example.com" value={form.email}
-                  onChange={e => setForm(p => ({ ...p, email: e.target.value }))} required />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Password</Label>
-                <Input type="password" placeholder="••••••••" value={form.password}
-                  onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                Sign In
-              </Button>
-            </form>
-            <p className="text-center text-sm text-gray-500 mt-4">
-              Belum punya akun?{' '}
-              <Link href="/register" className="text-primary font-medium">Daftar</Link>
-            </p>
-          </CardContent>
-        </Card>
       </div>
     </div>
   )
