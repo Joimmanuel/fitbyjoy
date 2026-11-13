@@ -24,8 +24,10 @@ Aplikasi web fitness personal untuk mencatat progres gym, tracking kalori harian
 
 | Fitur | Deskripsi |
 |-------|-----------|
-| 🏠 Dashboard | Ringkasan harian, streak, weekly goal, top progress |
+| 🏠 Dashboard | Ringkasan harian, streak, weekly goal, top progress, motivational quote |
 | 💪 Workout Log | Catat latihan dengan muscle group per exercise + rekomendasi exercise |
+| ✏️ Edit & Delete History | Edit atau hapus exercise/sesi dari history |
+| 🏆 PR Badge | Otomatis detect Personal Record baru saat save workout |
 | 📈 Exercise Progress | Grafik perkembangan beban per exercise |
 | 🍽️ Nutrition Tracker | Log makanan + estimasi kalori otomatis + history kalori per hari |
 | 📊 Analytics | Volume tracker, streak, distribusi muscle group per exercise |

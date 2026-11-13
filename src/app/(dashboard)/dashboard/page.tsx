@@ -8,6 +8,7 @@ import { Dumbbell, Flame, TrendingUp, Activity, Zap, Target } from 'lucide-react
 import { format, startOfWeek, endOfWeek, subDays } from 'date-fns'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/components/layout/UserProvider'
+import { MOTIVATIONAL_QUOTES } from '@/lib/constants'
 
 export default function DashboardPage() {
   const { userId } = useUser()
@@ -85,15 +86,24 @@ export default function DashboardPage() {
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
   const weeklyProgress = Math.min((stats.weekSessions / weeklyGoal) * 100, 100)
   const weeklyDone = stats.weekSessions >= weeklyGoal
+  const quote = MOTIVATIONAL_QUOTES[new Date().getDate() % MOTIVATIONAL_QUOTES.length]
 
   return (
     <div className="px-4 pt-6 pb-4">
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-4">
         <p className="text-sm text-gray-500">{greeting} 👋</p>
         <h1 className="text-2xl font-bold text-gray-900">{name}</h1>
         <p className="text-sm text-gray-400">{format(new Date(), 'EEEE, dd MMMM yyyy')}</p>
       </div>
+
+      {/* Motivational Quote */}
+      <Card className="border-0 shadow-sm bg-gradient-to-r from-gray-900 to-gray-700 text-white mb-4">
+        <CardContent className="p-4">
+          <p className="text-xs opacity-60 mb-1">💬 Quote of the day</p>
+          <p className="text-sm font-medium leading-relaxed">&ldquo;{quote.text}&rdquo;</p>
+        </CardContent>
+      </Card>
 
       {/* Streak + Weekly Goal */}
       <div className="grid grid-cols-2 gap-3 mb-4">

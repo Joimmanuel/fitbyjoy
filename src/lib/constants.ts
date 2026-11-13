@@ -1,5 +1,20 @@
 import { MuscleGroup } from '@/types'
 
+export const MOTIVATIONAL_QUOTES = [
+  { text: "The only bad workout is the one that didn't happen.", author: "Unknown" },
+  { text: "Push yourself because no one else is going to do it for you.", author: "Unknown" },
+  { text: "Success starts with self-discipline.", author: "Unknown" },
+  { text: "Your body can stand almost anything. It's your mind you have to convince.", author: "Unknown" },
+  { text: "Don't stop when you're tired. Stop when you're done.", author: "Unknown" },
+  { text: "Train insane or remain the same.", author: "Unknown" },
+  { text: "Sore today, strong tomorrow.", author: "Unknown" },
+  { text: "It never gets easier, you just get stronger.", author: "Unknown" },
+  { text: "Be stronger than your excuses.", author: "Unknown" },
+  { text: "The pain you feel today will be the strength you feel tomorrow.", author: "Unknown" },
+  { text: "Fitness is not about being better than someone else. It's about being better than you used to be.", author: "Unknown" },
+  { text: "Strive for progress, not perfection.", author: "Unknown" },
+]
+
 export const MUSCLE_GROUPS: MuscleGroup[] = [
   'Chest', 'Back', 'Shoulder', 'Leg', 'Biceps', 'Triceps', 'Full Body'
 ]
