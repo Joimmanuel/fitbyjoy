@@ -41,6 +41,7 @@ export default function WorkoutPage() {
   }, [userId])
 
   async function loadSessions() {
+    if (!userId) return
     const { data } = await supabase
       .from('workout_sessions')
       .select('*, exercise_logs(*)')
