@@ -96,7 +96,7 @@ export default function WorkoutPage() {
     <div className="px-4 pt-6">
       <div className="mb-4">
         <h1 className="text-xl font-bold text-gray-900">Workout Log</h1>
-        <p className="text-sm text-gray-500">Track your training sessions</p>
+        <p className="text-sm text-gray-500">Track your exercises & muscle groups</p>
       </div>
       <Tabs defaultValue="log">
         <TabsList className="w-full mb-4">
