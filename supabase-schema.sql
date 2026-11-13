@@ -27,7 +27,7 @@ CREATE TABLE workout_sessions (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   date DATE NOT NULL,
-  muscle_group TEXT NOT NULL,
+  muscle_group TEXT,
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -40,6 +40,7 @@ CREATE TABLE exercise_logs (
   session_id UUID REFERENCES workout_sessions(id) ON DELETE CASCADE NOT NULL,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   exercise_name TEXT NOT NULL,
+  muscle_group TEXT,
   weight DECIMAL(6,2) NOT NULL,
   unit TEXT DEFAULT 'KG' CHECK (unit IN ('KG', 'LBS')),
   sets INTEGER NOT NULL,
