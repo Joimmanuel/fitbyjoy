@@ -30,8 +30,8 @@ export default function AnalyticsPage() {
 
     async function load() {
       const [sessionsRes, logsRes, bodyRes] = await Promise.all([
-        supabase.from('workout_sessions').select('id, date, muscle_group').eq('user_id', userId).order('date'),
-        supabase.from('exercise_logs').select('exercise_name, weight, unit, sets, reps, created_at').eq('user_id', userId),
+        supabase.from('workout_sessions').select('id, date').eq('user_id', userId).order('date'),
+        supabase.from('exercise_logs').select('exercise_name, muscle_group, weight, unit, sets, reps, created_at').eq('user_id', userId),
         supabase.from('body_weight_logs').select('date, weight').eq('user_id', userId).order('date').limit(30),
       ])
 
@@ -43,9 +43,11 @@ export default function AnalyticsPage() {
       const monthEnd = format(endOfMonth(today), 'yyyy-MM-dd')
       const monthSessions = allSessions.filter((s: any) => s.date >= monthStart && s.date <= monthEnd)
 
-      // Muscle distribution
+      // Muscle distribution from exercise_logs
       const muscleCount: Record<string, number> = {}
-      allSessions.forEach((s: any) => { muscleCount[s.muscle_group] = (muscleCount[s.muscle_group] || 0) + 1 })
+      allLogs.forEach((l: any) => {
+        if (l.muscle_group) muscleCount[l.muscle_group] = (muscleCount[l.muscle_group] || 0) + 1
+      })
       const mostTrainedMuscle = Object.entries(muscleCount).sort((a, b) => b[1] - a[1])[0]?.[0] || ''
       const muscleDistribution = Object.entries(muscleCount).map(([muscle, count]) => ({ muscle, count })).sort((a, b) => b.count - a.count)
 

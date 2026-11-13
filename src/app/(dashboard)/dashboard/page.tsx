@@ -155,7 +155,11 @@ export default function DashboardPage() {
               <Card key={session.id} className="border-0 shadow-sm">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <Badge variant="secondary" className="text-xs">{session.muscle_group}</Badge>
+                    <div className="flex flex-wrap gap-1">
+                      {[...new Set(session.exercise_logs?.map((ex: any) => ex.muscle_group).filter(Boolean))].map((mg: any) => (
+                        <Badge key={mg} variant="secondary" className="text-xs">{mg}</Badge>
+                      ))}
+                    </div>
                     <span className="text-xs text-gray-400">{session.exercise_logs?.length || 0} exercises</span>
                   </div>
                   {session.exercise_logs?.slice(0, 3).map((ex: any) => (
