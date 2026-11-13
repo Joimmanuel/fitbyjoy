@@ -25,10 +25,10 @@ Aplikasi web fitness personal untuk mencatat progres gym, tracking kalori harian
 | Fitur | Deskripsi |
 |-------|-----------|
 | 🏠 Dashboard | Ringkasan harian, streak, weekly goal, top progress |
-| 💪 Workout Log | Catat latihan per muscle group + rekomendasi exercise |
+| 💪 Workout Log | Catat latihan dengan muscle group per exercise + rekomendasi exercise |
 | 📈 Exercise Progress | Grafik perkembangan beban per exercise |
-| 🍽️ Nutrition Tracker | Log makanan + estimasi kalori otomatis |
-| 📊 Analytics | Volume tracker, streak, distribusi muscle group |
+| 🍽️ Nutrition Tracker | Log makanan + estimasi kalori otomatis + history kalori per hari |
+| 📊 Analytics | Volume tracker, streak, distribusi muscle group per exercise |
 | ⚖️ Body Weight Tracker | Monitor berat badan harian |
 | 👤 Profile | Atur nama, target kalori, weekly goal |
 | 🔄 Sync | Data sinkron di semua device via Supabase |
@@ -76,16 +76,20 @@ Aplikasi web fitness personal untuk mencatat progres gym, tracking kalori harian
 │  └──────────┴─────────────┘ │
 │                             │
 │  Date: [11/01/2026      ]   │
-│  Muscle Group: [Triceps  ]  │
 │                             │
-│  💡 Recommended             │
+│  ── Exercise 1 ──           │
+│  Muscle Group: [Triceps  ]  │
 │  [Seated Tricep Ext.] [+]   │
 │  [Cable Pushdown    ] [+]   │
-│                             │
-│  Exercise 1                 │
 │  Name: [Seated Tricep Ext.] │
 │  Weight: [20] Unit: [KG ]   │
 │  Sets:   [4 ] Reps:  [12]   │
+│                             │
+│  ── Exercise 2 ──           │
+│  Muscle Group: [Chest    ]  │
+│  Name: [Chest Press      ]  │
+│  Weight: [40] Unit: [KG ]   │
+│  Sets:   [4 ] Reps:  [10]   │
 │                             │
 │  [+ Add Exercise]           │
 │  [    Save Workout    ]     │
@@ -126,6 +130,11 @@ Aplikasi web fitness personal untuk mencatat progres gym, tracking kalori harian
 │  │  550 kcal remaining │    │
 │  └─────────────────────┘    │
 │                             │
+│  ┌────────┬───────────────┐ │
+│  │ Today  │    History    │ │
+│  └────────┴───────────────┘ │
+│                             │
+│  [Today Tab]                │
 │  🔍 [Nasi Ayam...      ]    │
 │  Qty: [1]                   │
 │  ≈ 650 kcal per serving     │
@@ -134,9 +143,13 @@ Aplikasi web fitness personal untuk mencatat progres gym, tracking kalori harian
 │  Food        Qty  Calories  │
 │  Nasi Ayam    1   650 kcal  │
 │  Pisang       1   110 kcal  │
-│  Telur Rebus  2   140 kcal  │
-│  ─────────────────────────  │
-│  Total            900 kcal  │
+│  Total            760 kcal  │
+│                             │
+│  [History Tab]              │
+│  13 Nov 2026  1,450 kcal    │
+│  ████████░░░░  72% of target│
+│  12 Nov 2026  1,800 kcal    │
+│  ██████████░░  90% of target│
 └─────────────────────────────┘
 ```
 
@@ -225,6 +238,8 @@ npm install
 3. Jalankan juga SQL tambahan:
 ```sql
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS weekly_goal INTEGER DEFAULT 4;
+ALTER TABLE exercise_logs ADD COLUMN IF NOT EXISTS muscle_group TEXT;
+ALTER TABLE workout_sessions ALTER COLUMN muscle_group DROP NOT NULL;
 ```
 4. Buka **Authentication → Providers → Email** → matikan **Confirm email**
 5. Aktifkan **Anonymous Sign-ins** (opsional)
@@ -264,10 +279,11 @@ Buka [http://localhost:3000](http://localhost:3000)
 
 ### Log Workout
 1. Tap menu **Workout** (💪)
-2. Pilih tanggal & muscle group
-3. Tap rekomendasi exercise atau isi manual
+2. Pilih tanggal
+3. Per exercise: pilih **Muscle Group** → tap rekomendasi atau isi nama manual
 4. Isi weight, unit, sets, reps
-5. Tap **Save Workout**
+5. Tambah exercise lain jika perlu (beda muscle group boleh)
+6. Tap **Save Workout**
 
 ### Cek Progress
 1. Tap menu **Progress** (📈)
@@ -280,6 +296,7 @@ Buka [http://localhost:3000](http://localhost:3000)
 2. Ketik nama makanan → kalori otomatis terisi
 3. Atur quantity → tap **Add Food**
 4. Total kalori harian terupdate otomatis
+5. Tap tab **History** untuk lihat total kalori per hari
 
 ### Monitor Analytics
 1. Tap menu **Analytics** (📊)
