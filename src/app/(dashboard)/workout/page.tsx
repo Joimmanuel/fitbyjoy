@@ -51,8 +51,8 @@ export default function WorkoutPage() {
     setSessions(data || [])
   }
 
-  function updateExercise(idx: number, field: keyof ExerciseEntry, value: string) {
-    setExercises(prev => prev.map((e, i) => i === idx ? { ...e, [field]: value } : e))
+  function updateExercise(idx: number, field: keyof ExerciseEntry, value: string | null) {
+    setExercises(prev => prev.map((e, i) => i === idx ? { ...e, [field]: value ?? '' } : e))
   }
 
   function fillRecommendation(idx: number, name: string, mg: MuscleGroup) {
@@ -76,7 +76,7 @@ export default function WorkoutPage() {
     await supabase.from('exercise_logs').insert(
       valid.map(ex => ({
         session_id: session.id,
-        user_id: userId,
+        user_id: userId!,
         exercise_name: ex.exercise_name,
         muscle_group: ex.muscle_group || null,
         weight: parseFloat(ex.weight),
