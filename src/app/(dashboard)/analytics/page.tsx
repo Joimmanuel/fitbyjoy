@@ -7,8 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { MUSCLE_GROUP_COLORS } from '@/lib/constants'
 import { MuscleGroup } from '@/types'
 import { format, startOfMonth, endOfMonth, startOfWeek, subWeeks, subDays, subMonths } from 'date-fns'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts'
-import { TrendingUp, TrendingDown, Minus, AlertTriangle, Trophy, Zap } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts'
+import { TrendingUp, TrendingDown, Minus, AlertTriangle, Trophy, Zap, Flame } from 'lucide-react'
 
 type PREntry = { name: string; weight: number; unit: string; date: string }
 
@@ -30,6 +30,12 @@ export default function AnalyticsPage() {
     avgRestDays: 0,
     neglectedMuscles: [] as string[],
     muscleBalance: null as { push: number; pull: number; legs: number } | null,
+    avgDailyCalories: 0,
+    daysOverTarget: 0,
+    daysUnderTarget: 0,
+    topFoods: [] as { name: string; count: number }[],
+    nutritionTarget: 2000,
+    weeklyCalories: [] as { week: string; calories: number }[],
   })
 
   useEffect(() => {
@@ -38,10 +44,12 @@ export default function AnalyticsPage() {
     const today = new Date()
 
     async function load() {
-      const [sessionsRes, logsRes, bodyRes] = await Promise.all([
+      const [sessionsRes, logsRes, bodyRes, nutritionRes, profileRes] = await Promise.all([
         supabase.from('workout_sessions').select('id, date').eq('user_id', userId).order('date'),
         supabase.from('exercise_logs').select('exercise_name, muscle_group, weight, unit, sets, reps, created_at').eq('user_id', userId),
         supabase.from('body_weight_logs').select('date, weight').eq('user_id', userId).order('date').limit(30),
+        supabase.from('nutrition_logs').select('date, food_name, calories').eq('user_id', userId).order('date'),
+        supabase.from('profiles').select('target_calories').eq('id', userId).single(),
       ])
 
       const allSessions = sessionsRes.data || []
@@ -163,10 +171,31 @@ export default function AnalyticsPage() {
       const legs = legMuscles.reduce((a, m) => a + (muscleCount[m] || 0), 0)
       const muscleBalance = (push + pull + legs) > 0 ? { push, pull, legs } : null
 
+      // NUTRITION
+      const nutritionTarget = profileRes.data?.target_calories || 2000
+      const allNutrition = nutritionRes.data || []
+      const calByDate: Record<string, number> = {}
+      allNutrition.forEach((n: any) => { calByDate[n.date] = (calByDate[n.date] || 0) + n.calories })
+      const calValues = Object.values(calByDate)
+      const avgDailyCalories = calValues.length > 0 ? Math.round(calValues.reduce((a, b) => a + b, 0) / calValues.length) : 0
+      const daysOverTarget = calValues.filter(c => c > nutritionTarget).length
+      const daysUnderTarget = calValues.filter(c => c < nutritionTarget * 0.8).length
+      const foodCount: Record<string, number> = {}
+      allNutrition.forEach((n: any) => { foodCount[n.food_name] = (foodCount[n.food_name] || 0) + 1 })
+      const topFoods = Object.entries(foodCount).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, count]) => ({ name, count }))
+      const weeklyCalories = []
+      for (let i = 7; i >= 0; i--) {
+        const wStart = format(startOfWeek(subWeeks(today, i)), 'yyyy-MM-dd')
+        const wEnd = format(startOfWeek(subWeeks(today, i - 1)), 'yyyy-MM-dd')
+        const wCal = allNutrition.filter((n: any) => n.date >= wStart && n.date < wEnd).reduce((a: number, n: any) => a + n.calories, 0)
+        weeklyCalories.push({ week: `W${8 - i}`, calories: Math.round(wCal) })
+      }
+
       setData({
         totalWorkoutsMonth: monthSessions.length, mostTrainedMuscle, strongestExercise,
         avgWorkoutsPerWeek, streak: currentStreak, totalVolume, weeklyData, muscleDistribution,
         weightTrend, topPRs, volumeGrowth, avgRestDays, neglectedMuscles, muscleBalance,
+        avgDailyCalories, daysOverTarget, daysUnderTarget, topFoods, nutritionTarget, weeklyCalories,
       })
     }
     load()
@@ -323,40 +352,23 @@ export default function AnalyticsPage() {
         </Card>
       )}
 
-      {/* Weekly Workouts Chart */}
+      {/* Weekly Workouts + Volume (combined) */}
       {data.weeklyData.length > 0 && (
         <Card className="border-0 shadow-sm mb-4">
           <CardHeader className="pb-2 pt-4 px-4">
-            <CardTitle className="text-sm font-semibold text-gray-700">Weekly Workouts</CardTitle>
+            <CardTitle className="text-sm font-semibold text-gray-700">Weekly Workouts & Volume</CardTitle>
           </CardHeader>
           <CardContent className="px-2 pb-4">
-            <ResponsiveContainer width="100%" height={180}>
+            <ResponsiveContainer width="100%" height={200}>
               <BarChart data={data.weeklyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="week" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
-                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                <Bar dataKey="count" fill="#00BFA5" radius={[4, 4, 0, 0]} name="Workouts" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Weekly Volume Chart */}
-      {data.weeklyData.length > 0 && (
-        <Card className="border-0 shadow-sm mb-4">
-          <CardHeader className="pb-2 pt-4 px-4">
-            <CardTitle className="text-sm font-semibold text-gray-700">Weekly Volume (kg)</CardTitle>
-          </CardHeader>
-          <CardContent className="px-2 pb-4">
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={data.weeklyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="week" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip formatter={(v) => [`${Number(v).toLocaleString()} kg`, 'Volume']} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                <Bar dataKey="volume" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Volume" />
+                <YAxis yAxisId="left" tick={{ fontSize: 10 }} allowDecimals={false} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} />
+                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} formatter={(v, name) => name === 'Volume' ? [`${Number(v).toLocaleString()} kg`, name] : [v, name]} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar yAxisId="left" dataKey="count" fill="#00BFA5" radius={[4, 4, 0, 0]} name="Workouts" />
+                <Bar yAxisId="right" dataKey="volume" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Volume" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -388,6 +400,75 @@ export default function AnalyticsPage() {
             })}
           </CardContent>
         </Card>
+      )}
+
+      {/* Nutrition Analytics */}
+      {data.avgDailyCalories > 0 && (
+        <>
+          <div className="flex items-center gap-2 mb-3 mt-2">
+            <Flame className="w-4 h-4 text-orange-500" />
+            <p className="text-sm font-semibold text-gray-700">Nutrition Insights</p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-3 text-center">
+                <p className="text-lg font-bold text-orange-500">{data.avgDailyCalories}</p>
+                <p className="text-xs text-gray-500">Avg kcal/day</p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-3 text-center">
+                <p className="text-lg font-bold text-red-500">{data.daysOverTarget}</p>
+                <p className="text-xs text-gray-500">Days over</p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-3 text-center">
+                <p className="text-lg font-bold text-blue-500">{data.daysUnderTarget}</p>
+                <p className="text-xs text-gray-500">Days under</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {data.weeklyCalories.length > 0 && (
+            <Card className="border-0 shadow-sm mb-4">
+              <CardHeader className="pb-2 pt-4 px-4">
+                <CardTitle className="text-sm font-semibold text-gray-700">Weekly Calories</CardTitle>
+              </CardHeader>
+              <CardContent className="px-2 pb-4">
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={data.weeklyCalories}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="week" tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 10 }} />
+                    <Tooltip formatter={(v) => [`${Number(v).toLocaleString()} kcal`, 'Calories']} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                    <Bar dataKey="calories" fill="#f97316" radius={[4, 4, 0, 0]} name="Calories" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
+
+          {data.topFoods.length > 0 && (
+            <Card className="border-0 shadow-sm mb-4">
+              <CardHeader className="pb-2 pt-4 px-4">
+                <CardTitle className="text-sm font-semibold text-gray-700">Most Eaten Foods</CardTitle>
+              </CardHeader>
+              <CardContent className="px-4 pb-4 space-y-2">
+                {data.topFoods.map(({ name, count }, i) => (
+                  <div key={name} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-gray-400 w-4">{i + 1}</span>
+                      <p className="text-sm text-gray-800 capitalize">{name}</p>
+                    </div>
+                    <span className="text-xs bg-orange-50 text-orange-600 font-semibold px-2 py-0.5 rounded-full">{count}x</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
 
       {/* Body Weight Trend */}

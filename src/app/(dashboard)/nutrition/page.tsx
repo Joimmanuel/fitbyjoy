@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
-import { Plus, Trash2, Loader2, Flame, Search } from 'lucide-react'
+import { Plus, Trash2, Loader2, Flame, Search, Pencil, Check, X } from 'lucide-react'
 import { estimateCalories } from '@/lib/constants'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/components/layout/UserProvider'
@@ -25,6 +25,9 @@ export default function NutritionPage() {
   const [quantity, setQuantity] = useState('1')
   const [estimatedCal, setEstimatedCal] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editFood, setEditFood] = useState('')
+  const [editQty, setEditQty] = useState('1')
 
   useEffect(() => {
     if (!userId) return
@@ -76,6 +79,25 @@ export default function NutritionPage() {
     setLogs(prev => prev.filter(l => l.id !== id))
     setAllLogs(prev => prev.filter(l => l.id !== id))
     toast.success('Removed')
+  }
+
+  function startEdit(log: any) {
+    setEditingId(log.id)
+    setEditFood(log.food_name)
+    setEditQty(String(log.quantity))
+  }
+
+  async function saveEdit(log: any) {
+    const calories = estimateCalories(editFood) * parseInt(editQty || '1')
+    const { error } = await supabase.from('nutrition_logs').update({
+      food_name: editFood.trim(), quantity: parseInt(editQty || '1'), calories,
+    }).eq('id', log.id)
+    if (error) { toast.error('Failed to update'); return }
+    const updated = { ...log, food_name: editFood.trim(), quantity: parseInt(editQty || '1'), calories }
+    setLogs(prev => prev.map(l => l.id === log.id ? updated : l))
+    setAllLogs(prev => prev.map(l => l.id === log.id ? updated : l))
+    setEditingId(null)
+    toast.success('Updated')
   }
 
   return (
@@ -187,9 +209,24 @@ export default function NutritionPage() {
                       <Progress value={dayProgress} className="h-1.5 mb-2" />
                       <div className="space-y-1">
                         {dayLogs.map((log: any) => (
-                          <div key={log.id} className="flex justify-between text-sm">
-                            <span className="text-gray-600 truncate flex-1">{log.food_name} ×{log.quantity}</span>
-                            <span className="text-gray-500 ml-2 shrink-0 text-xs">{log.calories} kcal</span>
+                          <div key={log.id}>
+                            {editingId === log.id ? (
+                              <div className="flex items-center gap-1 py-1">
+                                <input className="flex-1 text-sm border rounded px-2 py-0.5 min-w-0" value={editFood} onChange={e => setEditFood(e.target.value)} />
+                                <input className="w-10 text-sm border rounded px-1 py-0.5 text-center" type="number" min="1" value={editQty} onChange={e => setEditQty(e.target.value)} />
+                                <button onClick={() => saveEdit(log)}><Check className="w-4 h-4 text-green-500" /></button>
+                                <button onClick={() => setEditingId(null)}><X className="w-4 h-4 text-gray-400" /></button>
+                              </div>
+                            ) : (
+                              <div className="flex justify-between items-center text-sm py-0.5">
+                                <span className="text-gray-600 truncate flex-1">{log.food_name} ×{log.quantity}</span>
+                                <div className="flex items-center gap-2 ml-2 shrink-0">
+                                  <span className="text-gray-500 text-xs">{log.calories} kcal</span>
+                                  <button onClick={() => startEdit(log)}><Pencil className="w-3 h-3 text-blue-400" /></button>
+                                  <button onClick={() => handleDelete(log.id)}><Trash2 className="w-3 h-3 text-red-400" /></button>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
