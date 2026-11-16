@@ -6,8 +6,11 @@ import { useUser } from '@/components/layout/UserProvider'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { MUSCLE_GROUP_COLORS } from '@/lib/constants'
 import { MuscleGroup } from '@/types'
-import { format, startOfMonth, endOfMonth, startOfWeek, subWeeks, subDays } from 'date-fns'
+import { format, startOfMonth, endOfMonth, startOfWeek, subWeeks, subDays, subMonths } from 'date-fns'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts'
+import { TrendingUp, TrendingDown, Minus, AlertTriangle, Trophy, Zap } from 'lucide-react'
+
+type PREntry = { name: string; weight: number; unit: string; date: string }
 
 export default function AnalyticsPage() {
   const { userId } = useUser()
@@ -21,6 +24,12 @@ export default function AnalyticsPage() {
     weeklyData: [] as { week: string; count: number; volume: number }[],
     muscleDistribution: [] as { muscle: string; count: number }[],
     weightTrend: [] as { date: string; weight: number }[],
+    // new
+    topPRs: [] as PREntry[],
+    volumeGrowth: 0, // % vs last month
+    avgRestDays: 0,
+    neglectedMuscles: [] as string[],
+    muscleBalance: null as { push: number; pull: number; legs: number } | null,
   })
 
   useEffect(() => {
@@ -41,9 +50,11 @@ export default function AnalyticsPage() {
       // Month stats
       const monthStart = format(startOfMonth(today), 'yyyy-MM-dd')
       const monthEnd = format(endOfMonth(today), 'yyyy-MM-dd')
+      const prevMonthStart = format(startOfMonth(subMonths(today, 1)), 'yyyy-MM-dd')
+      const prevMonthEnd = format(endOfMonth(subMonths(today, 1)), 'yyyy-MM-dd')
       const monthSessions = allSessions.filter((s: any) => s.date >= monthStart && s.date <= monthEnd)
 
-      // Muscle distribution from exercise_logs
+      // Muscle distribution
       const muscleCount: Record<string, number> = {}
       allLogs.forEach((l: any) => {
         if (l.muscle_group) muscleCount[l.muscle_group] = (muscleCount[l.muscle_group] || 0) + 1
@@ -60,16 +71,15 @@ export default function AnalyticsPage() {
       const strongest = Object.entries(exWeights).sort((a, b) => b[1].weight - a[1].weight)[0]
       const strongestExercise = strongest ? { name: strongest[0], ...strongest[1] } : null
 
-      // Total volume (weight × sets × reps)
+      // Total volume
       const totalVolume = Math.round(allLogs.reduce((a: number, l: any) => a + (l.weight * l.sets * l.reps), 0))
 
-      // Weekly data with volume
+      // Weekly data
       const weeklyData = []
       for (let i = 7; i >= 0; i--) {
         const wStart = format(startOfWeek(subWeeks(today, i)), 'yyyy-MM-dd')
         const wEnd = format(startOfWeek(subWeeks(today, i - 1)), 'yyyy-MM-dd')
         const weekSessions = allSessions.filter((s: any) => s.date >= wStart && s.date < wEnd)
-        const weekSessionIds = new Set(weekSessions.map((s: any) => s.id))
         const weekLogs = allLogs.filter((l: any) => {
           const logDate = l.created_at?.split('T')[0]
           return logDate >= wStart && logDate < wEnd
@@ -80,7 +90,7 @@ export default function AnalyticsPage() {
 
       const avgWorkoutsPerWeek = weeklyData.slice(-4).reduce((a, b) => a + b.count, 0) / 4
 
-      // Streak calculation
+      // Streak
       const sessionDates = new Set(allSessions.map((s: any) => s.date))
       const todayStr = format(today, 'yyyy-MM-dd')
       let currentStreak = 0
@@ -98,13 +108,74 @@ export default function AnalyticsPage() {
         weight: w.weight,
       }))
 
-      setData({ totalWorkoutsMonth: monthSessions.length, mostTrainedMuscle, strongestExercise, avgWorkoutsPerWeek, streak: currentStreak, totalVolume, weeklyData, muscleDistribution, weightTrend })
+      // --- NEW INSIGHTS ---
+
+      // Top 3 PRs: highest weight per exercise with date
+      const exPR: Record<string, PREntry> = {}
+      allLogs.forEach((l: any) => {
+        if (!exPR[l.exercise_name] || l.weight > exPR[l.exercise_name].weight)
+          exPR[l.exercise_name] = { name: l.exercise_name, weight: l.weight, unit: l.unit, date: l.created_at?.split('T')[0] || '' }
+      })
+      const topPRs = Object.values(exPR).sort((a, b) => b.weight - a.weight).slice(0, 3)
+
+      // Volume growth: this month vs last month
+      const thisMonthLogs = allLogs.filter((l: any) => {
+        const d = l.created_at?.split('T')[0] || ''
+        return d >= monthStart && d <= monthEnd
+      })
+      const lastMonthLogs = allLogs.filter((l: any) => {
+        const d = l.created_at?.split('T')[0] || ''
+        return d >= prevMonthStart && d <= prevMonthEnd
+      })
+      const thisVol = thisMonthLogs.reduce((a: number, l: any) => a + (l.weight * l.sets * l.reps), 0)
+      const lastVol = lastMonthLogs.reduce((a: number, l: any) => a + (l.weight * l.sets * l.reps), 0)
+      const volumeGrowth = lastVol > 0 ? Math.round(((thisVol - lastVol) / lastVol) * 100) : 0
+
+      // Avg rest days between sessions (last 30 sessions)
+      const recentDates = allSessions.slice(-30).map((s: any) => s.date).sort()
+      let totalGap = 0
+      for (let i = 1; i < recentDates.length; i++) {
+        const diff = (new Date(recentDates[i]).getTime() - new Date(recentDates[i - 1]).getTime()) / 86400000
+        totalGap += diff - 1 // rest days = gap - 1
+      }
+      const avgRestDays = recentDates.length > 1 ? Math.round((totalGap / (recentDates.length - 1)) * 10) / 10 : 0
+
+      // Neglected muscles: trained < 20% of avg in last 30 days
+      const recentLogs = allLogs.filter((l: any) => {
+        const d = l.created_at?.split('T')[0] || ''
+        const cutoff = format(subDays(today, 30), 'yyyy-MM-dd')
+        return d >= cutoff
+      })
+      const recentMuscleCount: Record<string, number> = {}
+      recentLogs.forEach((l: any) => {
+        if (l.muscle_group) recentMuscleCount[l.muscle_group] = (recentMuscleCount[l.muscle_group] || 0) + 1
+      })
+      const allMuscles: MuscleGroup[] = ['Chest', 'Back', 'Shoulder', 'Leg', 'Biceps', 'Triceps']
+      const avgCount = Object.values(recentMuscleCount).reduce((a, b) => a + b, 0) / (Object.keys(recentMuscleCount).length || 1)
+      const neglectedMuscles = allMuscles.filter(m => (recentMuscleCount[m] || 0) < avgCount * 0.3)
+
+      // Push/Pull/Legs balance
+      const pushMuscles = ['Chest', 'Shoulder', 'Triceps']
+      const pullMuscles = ['Back', 'Biceps']
+      const legMuscles = ['Leg']
+      const push = pushMuscles.reduce((a, m) => a + (muscleCount[m] || 0), 0)
+      const pull = pullMuscles.reduce((a, m) => a + (muscleCount[m] || 0), 0)
+      const legs = legMuscles.reduce((a, m) => a + (muscleCount[m] || 0), 0)
+      const muscleBalance = (push + pull + legs) > 0 ? { push, pull, legs } : null
+
+      setData({
+        totalWorkoutsMonth: monthSessions.length, mostTrainedMuscle, strongestExercise,
+        avgWorkoutsPerWeek, streak: currentStreak, totalVolume, weeklyData, muscleDistribution,
+        weightTrend, topPRs, volumeGrowth, avgRestDays, neglectedMuscles, muscleBalance,
+      })
     }
     load()
   }, [userId])
 
+  const balanceTotal = data.muscleBalance ? data.muscleBalance.push + data.muscleBalance.pull + data.muscleBalance.legs : 0
+
   return (
-    <div className="px-4 pt-6">
+    <div className="px-4 pt-6 pb-8">
       <div className="mb-4">
         <h1 className="text-xl font-bold text-gray-900">Analytics</h1>
         <p className="text-sm text-gray-500">Your fitness insights</p>
@@ -118,11 +189,132 @@ export default function AnalyticsPage() {
         <StatCard label="Total Volume" value={`${data.totalVolume.toLocaleString()} kg`} emoji="💪" color="bg-green-50 text-green-600" />
       </div>
 
+      {/* Volume Growth vs Last Month */}
+      {data.volumeGrowth !== 0 && (
+        <Card className="border-0 shadow-sm mb-4">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${data.volumeGrowth > 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+              {data.volumeGrowth > 0
+                ? <TrendingUp className="w-5 h-5 text-green-600" />
+                : <TrendingDown className="w-5 h-5 text-red-500" />}
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Volume vs Last Month</p>
+              <p className={`font-bold text-sm ${data.volumeGrowth > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                {data.volumeGrowth > 0 ? '+' : ''}{data.volumeGrowth}%
+                <span className="text-gray-500 font-normal ml-1">
+                  {data.volumeGrowth > 10 ? '— great progress! 🚀' : data.volumeGrowth > 0 ? '— keep it up!' : '— try to increase load'}
+                </span>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Avg Rest Days */}
+      {data.avgRestDays > 0 && (
+        <Card className="border-0 shadow-sm mb-4">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center">
+              <Minus className="w-5 h-5 text-sky-500" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Avg Rest Between Sessions</p>
+              <p className="font-bold text-sm text-gray-900">
+                {data.avgRestDays} days
+                <span className="text-gray-500 font-normal ml-1">
+                  {data.avgRestDays <= 1 ? '— high frequency 💪' : data.avgRestDays <= 2 ? '— good recovery balance' : '— consider training more often'}
+                </span>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Neglected Muscles Warning */}
+      {data.neglectedMuscles.length > 0 && (
+        <Card className="border-0 shadow-sm mb-4 border-l-4 border-l-amber-400">
+          <CardContent className="p-4 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-gray-800">Neglected in last 30 days</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {data.neglectedMuscles.join(', ')} — consider adding these to your next sessions
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Top PRs */}
+      {data.topPRs.length > 0 && (
+        <Card className="border-0 shadow-sm mb-4">
+          <CardHeader className="pb-2 pt-4 px-4">
+            <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
+              <Trophy className="w-4 h-4 text-yellow-500" /> Personal Records
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-4 pb-4 space-y-2">
+            {data.topPRs.map((pr, i) => (
+              <div key={pr.name} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-gray-400 w-4">{i + 1}</span>
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">{pr.name}</p>
+                    {pr.date && <p className="text-xs text-gray-400">{format(new Date(pr.date + 'T00:00:00'), 'dd MMM yyyy')}</p>}
+                  </div>
+                </div>
+                <span className="text-sm font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">
+                  {pr.weight} {pr.unit}
+                </span>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Push / Pull / Legs Balance */}
+      {data.muscleBalance && balanceTotal > 0 && (
+        <Card className="border-0 shadow-sm mb-4">
+          <CardHeader className="pb-2 pt-4 px-4">
+            <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
+              <Zap className="w-4 h-4 text-purple-500" /> Push / Pull / Legs Balance
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-4 pb-4 space-y-2">
+            {[
+              { label: 'Push (Chest, Shoulder, Triceps)', value: data.muscleBalance.push, color: '#ef4444' },
+              { label: 'Pull (Back, Biceps)', value: data.muscleBalance.pull, color: '#3b82f6' },
+              { label: 'Legs', value: data.muscleBalance.legs, color: '#00BFA5' },
+            ].map(({ label, value, color }) => {
+              const pct = Math.round((value / balanceTotal) * 100)
+              return (
+                <div key={label}>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-gray-600">{label}</span>
+                    <span className="font-semibold text-gray-700">{pct}%</span>
+                  </div>
+                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
+                  </div>
+                </div>
+              )
+            })}
+            {data.muscleBalance.legs / balanceTotal < 0.2 && (
+              <p className="text-xs text-amber-600 mt-1">⚠️ Leg training is low — don't skip leg day!</p>
+            )}
+            {data.muscleBalance.pull / balanceTotal < 0.25 && (
+              <p className="text-xs text-amber-600 mt-1">⚠️ Pull volume is low — balance with more back/biceps work</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Strongest Exercise */}
       {data.strongestExercise && (
         <Card className="border-0 shadow-sm mb-4">
           <CardContent className="p-4">
-            <p className="text-xs text-gray-500 mb-1">🏆 Strongest Exercise</p>
+            <p className="text-xs text-gray-500 mb-1">🏆 Heaviest Lift Ever</p>
             <p className="font-bold text-gray-900">{data.strongestExercise.name}</p>
             <span className="inline-block mt-1 text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
               {data.strongestExercise.weight} {data.strongestExercise.unit}
@@ -186,7 +378,7 @@ export default function AnalyticsPage() {
                 <div key={muscle}>
                   <div className="flex justify-between text-xs mb-1">
                     <span className="font-medium text-gray-700">{muscle}</span>
-                    <span className="text-gray-500">{count} sessions ({pct}%)</span>
+                    <span className="text-gray-500">{count} sets ({pct}%)</span>
                   </div>
                   <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
