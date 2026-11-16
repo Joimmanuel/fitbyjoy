@@ -7,7 +7,7 @@ import UserProvider from '@/components/layout/UserProvider'
 const geist = Geist({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Joy Fit - Personal Progress Tracker',
+  title: 'JoyFit - Personal Tracker Gym',
   description: 'Track your gym progress, workouts, and nutrition',
 }
 
