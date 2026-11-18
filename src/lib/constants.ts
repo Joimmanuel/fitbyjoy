@@ -45,6 +45,7 @@ export const EXERCISE_DETAILS: Record<MuscleGroup, ExerciseInfo[]> = {
     { name: 'T Bar Row', img: '/exercises/t-bar-row.jpg', sets: 3, reps: 10 },
     { name: 'Pull Up Assistance Machine', img: '/exercises/pull-up-assist.jpg', sets: 3, reps: 10 },
     { name: 'Cable Row', img: '/exercises/cable-row.jpg', sets: 3, reps: 12 },
+    { name: 'Low Row', img: '/exercises/low-row.jpg', sets: 3, reps: 12 },
   ],
   Shoulder: [
     { name: 'Shoulder Press Machine', img: '/exercises/shoulder-press-machine.jpg', sets: 4, reps: 12 },
@@ -64,6 +65,7 @@ export const EXERCISE_DETAILS: Record<MuscleGroup, ExerciseInfo[]> = {
     { name: 'Cable Curl', img: '/exercises/cable-curl.jpg', sets: 3, reps: 12 },
     { name: 'Hammer Curl', img: '/exercises/hammer-curl.jpg', sets: 3, reps: 12 },
     { name: 'EZ Curl Bar', img: '/exercises/ez-curl.jpg', sets: 4, reps: 10 },
+    { name: 'Camber Curl', img: '/exercises/camber-curl.jpg', sets: 3, reps: 12 },
   ],
   Leg: [
     { name: 'Leg Press', img: '/exercises/leg-press.jpg', sets: 4, reps: 12 },

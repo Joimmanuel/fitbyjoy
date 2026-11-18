@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { MUSCLE_GROUP_COLORS } from '@/lib/constants'
 import { MuscleGroup } from '@/types'
 import { format, startOfMonth, endOfMonth, startOfWeek, subWeeks, subDays, subMonths } from 'date-fns'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { TrendingUp, TrendingDown, Minus, AlertTriangle, Trophy, Zap, Flame } from 'lucide-react'
 
 type PREntry = { name: string; weight: number; unit: string; date: string }
@@ -23,7 +23,6 @@ export default function AnalyticsPage() {
     totalVolume: 0,
     weeklyData: [] as { week: string; count: number; volume: number }[],
     muscleDistribution: [] as { muscle: string; count: number }[],
-    weightTrend: [] as { date: string; weight: number }[],
     // new
     topPRs: [] as PREntry[],
     volumeGrowth: 0, // % vs last month
@@ -44,10 +43,9 @@ export default function AnalyticsPage() {
     const today = new Date()
 
     async function load() {
-      const [sessionsRes, logsRes, bodyRes, nutritionRes, profileRes] = await Promise.all([
+      const [sessionsRes, logsRes, nutritionRes, profileRes] = await Promise.all([
         supabase.from('workout_sessions').select('id, date').eq('user_id', userId).order('date'),
         supabase.from('exercise_logs').select('exercise_name, muscle_group, weight, unit, sets, reps, created_at').eq('user_id', userId),
-        supabase.from('body_weight_logs').select('date, weight').eq('user_id', userId).order('date').limit(30),
         supabase.from('nutrition_logs').select('date, food_name, calories').eq('user_id', userId).order('date'),
         supabase.from('profiles').select('target_calories').eq('id', userId).single(),
       ])
@@ -110,11 +108,7 @@ export default function AnalyticsPage() {
         else break
       }
 
-      // Body weight trend
-      const weightTrend = (bodyRes.data || []).map((w: any) => ({
-        date: format(new Date(w.date + 'T00:00:00'), 'dd/MM'),
-        weight: w.weight,
-      }))
+      // Body weight trend removed
 
       // --- NEW INSIGHTS ---
 
@@ -194,7 +188,7 @@ export default function AnalyticsPage() {
       setData({
         totalWorkoutsMonth: monthSessions.length, mostTrainedMuscle, strongestExercise,
         avgWorkoutsPerWeek, streak: currentStreak, totalVolume, weeklyData, muscleDistribution,
-        weightTrend, topPRs, volumeGrowth, avgRestDays, neglectedMuscles, muscleBalance,
+        weightTrend: [], topPRs, volumeGrowth, avgRestDays, neglectedMuscles, muscleBalance,
         avgDailyCalories, daysOverTarget, daysUnderTarget, topFoods, nutritionTarget, weeklyCalories,
       })
     }
@@ -449,46 +443,7 @@ export default function AnalyticsPage() {
               </CardContent>
             </Card>
           )}
-
-          {data.topFoods.length > 0 && (
-            <Card className="border-0 shadow-sm mb-4">
-              <CardHeader className="pb-2 pt-4 px-4">
-                <CardTitle className="text-sm font-semibold text-gray-700">Most Eaten Foods</CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 pb-4 space-y-2">
-                {data.topFoods.map(({ name, count }, i) => (
-                  <div key={name} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-gray-400 w-4">{i + 1}</span>
-                      <p className="text-sm text-gray-800 capitalize">{name}</p>
-                    </div>
-                    <span className="text-xs bg-orange-50 text-orange-600 font-semibold px-2 py-0.5 rounded-full">{count}x</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
         </>
-      )}
-
-      {/* Body Weight Trend */}
-      {data.weightTrend.length > 1 && (
-        <Card className="border-0 shadow-sm mb-4">
-          <CardHeader className="pb-2 pt-4 px-4">
-            <CardTitle className="text-sm font-semibold text-gray-700">Body Weight Trend</CardTitle>
-          </CardHeader>
-          <CardContent className="px-2 pb-4">
-            <ResponsiveContainer width="100%" height={180}>
-              <LineChart data={data.weightTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} domain={['auto', 'auto']} />
-                <Tooltip formatter={v => [`${v} KG`, 'Weight']} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                <Line type="monotone" dataKey="weight" stroke="#3b82f6" strokeWidth={2.5} dot={{ fill: '#3b82f6', r: 4 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
       )}
     </div>
   )
