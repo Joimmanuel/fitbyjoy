@@ -19,53 +19,65 @@ export const MUSCLE_GROUPS: MuscleGroup[] = [
   'Chest', 'Back', 'Shoulder', 'Leg', 'Biceps', 'Triceps', 'Full Body'
 ]
 
+export type ExerciseInfo = { name: string; img: string; sets: number; reps: number }
+
 export const EXERCISE_RECOMMENDATIONS: Record<MuscleGroup, string[]> = {
+  Chest: ['Chest Press Machine','Incline Press Machine','Pec Deck','Cable Fly','Smith Machine Bench Press'],
+  Back: ['Lat Pulldown','Seated Row','T Bar Row','Pull Up Assistance Machine','Cable Row'],
+  Shoulder: ['Shoulder Press Machine','Lateral Raise Machine','Rear Delt Fly','Cable Front Raise'],
+  Triceps: ['Seated Tricep Extension','Cable Pushdown','Rope Pushdown','Assisted Dip Machine','Overhead Extension'],
+  Biceps: ['Preacher Curl Machine','Cable Curl','Hammer Curl','EZ Curl Bar'],
+  Leg: ['Leg Press','Leg Extension','Leg Curl','Calf Raise Machine','Hack Squat'],
+  'Full Body': ['Deadlift','Squat','Barbell Row','Overhead Press','Pull Up'],
+}
+
+export const EXERCISE_DETAILS: Record<MuscleGroup, ExerciseInfo[]> = {
   Chest: [
-    'Chest Press Machine',
-    'Incline Press Machine',
-    'Pec Deck',
-    'Cable Fly',
-    'Smith Machine Bench Press',
+    { name: 'Chest Press Machine', img: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&q=80', sets: 4, reps: 12 },
+    { name: 'Incline Press Machine', img: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&q=80', sets: 3, reps: 12 },
+    { name: 'Pec Deck', img: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=400&q=80', sets: 3, reps: 15 },
+    { name: 'Cable Fly', img: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&q=80', sets: 3, reps: 15 },
+    { name: 'Smith Machine Bench Press', img: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=400&q=80', sets: 4, reps: 10 },
   ],
   Back: [
-    'Lat Pulldown',
-    'Seated Row',
-    'T Bar Row',
-    'Pull Up Assistance Machine',
-    'Cable Row',
+    { name: 'Lat Pulldown', img: 'https://images.unsplash.com/photo-1603287681836-b174ce5074c2?w=400&q=80', sets: 4, reps: 12 },
+    { name: 'Seated Row', img: 'https://images.unsplash.com/photo-1534367610401-9f5ed68180aa?w=400&q=80', sets: 4, reps: 12 },
+    { name: 'T Bar Row', img: 'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=400&q=80', sets: 3, reps: 10 },
+    { name: 'Pull Up Assistance Machine', img: 'https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=400&q=80', sets: 3, reps: 10 },
+    { name: 'Cable Row', img: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=400&q=80', sets: 3, reps: 12 },
   ],
   Shoulder: [
-    'Shoulder Press Machine',
-    'Lateral Raise Machine',
-    'Rear Delt Fly',
-    'Cable Front Raise',
+    { name: 'Shoulder Press Machine', img: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=400&q=80', sets: 4, reps: 12 },
+    { name: 'Lateral Raise Machine', img: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&q=80', sets: 3, reps: 15 },
+    { name: 'Rear Delt Fly', img: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&q=80', sets: 3, reps: 15 },
+    { name: 'Cable Front Raise', img: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&q=80', sets: 3, reps: 12 },
   ],
   Triceps: [
-    'Seated Tricep Extension',
-    'Cable Pushdown',
-    'Rope Pushdown',
-    'Assisted Dip Machine',
-    'Overhead Extension',
+    { name: 'Seated Tricep Extension', img: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=400&q=80', sets: 3, reps: 15 },
+    { name: 'Cable Pushdown', img: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=400&q=80', sets: 3, reps: 15 },
+    { name: 'Rope Pushdown', img: 'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=400&q=80', sets: 3, reps: 15 },
+    { name: 'Assisted Dip Machine', img: 'https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=400&q=80', sets: 3, reps: 12 },
+    { name: 'Overhead Extension', img: 'https://images.unsplash.com/photo-1603287681836-b174ce5074c2?w=400&q=80', sets: 3, reps: 12 },
   ],
   Biceps: [
-    'Preacher Curl Machine',
-    'Cable Curl',
-    'Hammer Curl',
-    'EZ Curl Bar',
+    { name: 'Preacher Curl Machine', img: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=400&q=80', sets: 3, reps: 12 },
+    { name: 'Cable Curl', img: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=400&q=80', sets: 3, reps: 12 },
+    { name: 'Hammer Curl', img: 'https://images.unsplash.com/photo-1534367610401-9f5ed68180aa?w=400&q=80', sets: 3, reps: 12 },
+    { name: 'EZ Curl Bar', img: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&q=80', sets: 4, reps: 10 },
   ],
   Leg: [
-    'Leg Press',
-    'Leg Extension',
-    'Leg Curl',
-    'Calf Raise Machine',
-    'Hack Squat',
+    { name: 'Leg Press', img: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&q=80', sets: 4, reps: 12 },
+    { name: 'Leg Extension', img: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&q=80', sets: 3, reps: 15 },
+    { name: 'Leg Curl', img: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=400&q=80', sets: 3, reps: 15 },
+    { name: 'Calf Raise Machine', img: 'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=400&q=80', sets: 4, reps: 20 },
+    { name: 'Hack Squat', img: 'https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=400&q=80', sets: 4, reps: 10 },
   ],
   'Full Body': [
-    'Deadlift',
-    'Squat',
-    'Barbell Row',
-    'Overhead Press',
-    'Pull Up',
+    { name: 'Deadlift', img: 'https://images.unsplash.com/photo-1603287681836-b174ce5074c2?w=400&q=80', sets: 4, reps: 8 },
+    { name: 'Squat', img: 'https://images.unsplash.com/photo-1534367610401-9f5ed68180aa?w=400&q=80', sets: 4, reps: 10 },
+    { name: 'Barbell Row', img: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=400&q=80', sets: 4, reps: 10 },
+    { name: 'Overhead Press', img: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=400&q=80', sets: 3, reps: 10 },
+    { name: 'Pull Up', img: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&q=80', sets: 3, reps: 8 },
   ],
 }
 
