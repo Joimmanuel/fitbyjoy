@@ -9,7 +9,7 @@ import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import { Plus, Trash2, Loader2, Flame, Search, Pencil, Check, X } from 'lucide-react'
-import { estimateCalories } from '@/lib/constants'
+import { estimateCalories, estimateProtein } from '@/lib/constants'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/components/layout/UserProvider'
 import { format } from 'date-fns'
@@ -24,6 +24,7 @@ export default function NutritionPage() {
   const [foodName, setFoodName] = useState('')
   const [quantity, setQuantity] = useState('1')
   const [estimatedCal, setEstimatedCal] = useState<number | null>(null)
+  const [estimatedProtein, setEstimatedProtein] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editFood, setEditFood] = useState('')
@@ -53,6 +54,7 @@ export default function NutritionPage() {
   const sortedDates = Object.keys(logsByDate).sort((a, b) => b.localeCompare(a))
 
   const totalCalories = logs.reduce((a, l) => a + l.calories, 0)
+  const totalProtein = logs.reduce((a, l) => a + (l.protein ?? estimateProtein(l.food_name) * l.quantity), 0)
   const progress = Math.min((totalCalories / targetCalories) * 100, 100)
 
   async function handleAdd(e: React.FormEvent) {
@@ -60,15 +62,16 @@ export default function NutritionPage() {
     if (!foodName.trim() || !userId) return
     setLoading(true)
     const calories = estimateCalories(foodName) * parseInt(quantity || '1')
+    const protein = estimateProtein(foodName) * parseInt(quantity || '1')
     const { data, error } = await supabase.from('nutrition_logs').insert({
       user_id: userId, date: today, food_name: foodName.trim(),
       quantity: parseInt(quantity || '1'), calories,
     }).select().single()
     if (error) { toast.error('Failed to add food') }
     else {
-      setLogs(prev => [...prev, data])
-      setAllLogs(prev => [data, ...prev])
-      setFoodName(''); setQuantity('1'); setEstimatedCal(null)
+      setLogs(prev => [...prev, { ...data, protein }])
+      setAllLogs(prev => [{ ...data, protein }, ...prev])
+      setFoodName(''); setQuantity('1'); setEstimatedCal(null); setEstimatedProtein(null)
       toast.success(`Added ${foodName} (${calories} kcal)`)
     }
     setLoading(false)
@@ -120,7 +123,10 @@ export default function NutritionPage() {
             </div>
           </div>
           <Progress value={progress} className="h-2 bg-white/30 [&>div]:bg-white" />
-          <p className="text-xs opacity-75 mt-1">{Math.max(0, targetCalories - totalCalories)} kcal remaining</p>
+          <div className="flex justify-between text-xs opacity-75 mt-1">
+            <span>{Math.max(0, targetCalories - totalCalories)} kcal remaining</span>
+            <span>~{Math.round(totalProtein)}g protein today</span>
+          </div>
         </CardContent>
       </Card>
 
@@ -139,9 +145,14 @@ export default function NutritionPage() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <Input className="pl-9" placeholder="e.g. Nasi Ayam, Pisang..."
-                      value={foodName} onChange={e => { setFoodName(e.target.value); setEstimatedCal(e.target.value.length > 2 ? estimateCalories(e.target.value) : null) }} />
+                      value={foodName} onChange={e => { const v = e.target.value; setFoodName(v); setEstimatedCal(v.length > 2 ? estimateCalories(v) : null); setEstimatedProtein(v.length > 2 ? estimateProtein(v) : null) }} />
                   </div>
-                  {estimatedCal && <p className="text-xs text-green-600 font-medium">≈ {estimatedCal} kcal per serving</p>}
+                  {estimatedCal && (
+                    <div className="flex gap-3">
+                      <p className="text-xs text-green-600 font-medium">≈ {estimatedCal} kcal</p>
+                      <p className="text-xs text-blue-600 font-medium">≈ {estimatedProtein}g protein</p>
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label>Quantity</Label>
@@ -159,19 +170,28 @@ export default function NutritionPage() {
             <Card className="border-0 shadow-sm">
               <CardContent className="p-0">
                 <div className="grid grid-cols-[1fr_auto_auto_auto] text-xs font-semibold text-gray-500 px-4 py-2 border-b bg-gray-50 rounded-t-xl">
-                  <span>Food</span><span className="text-center px-2">Qty</span><span className="text-right px-2">Calories</span><span></span>
+                  <span>Food</span><span className="text-center px-2">Qty</span><span className="text-right px-2">Kcal / Protein</span><span></span>
                 </div>
-                {logs.map(log => (
+                {logs.map(log => {
+                  const p = log.protein ?? estimateProtein(log.food_name) * log.quantity
+                  return (
                   <div key={log.id} className="grid grid-cols-[1fr_auto_auto_auto] items-center px-4 py-3 border-b last:border-0">
                     <span className="text-sm text-gray-800 truncate">{log.food_name}</span>
                     <span className="text-sm text-gray-500 text-center px-2">{log.quantity}</span>
-                    <span className="text-sm font-semibold text-orange-600 text-right px-2">{log.calories} kcal</span>
+                    <div className="text-right px-2">
+                      <p className="text-xs font-semibold text-orange-600">{log.calories} kcal</p>
+                      <p className="text-xs text-blue-500">{p}g protein</p>
+                    </div>
                     <button onClick={() => handleDelete(log.id)}><Trash2 className="w-3.5 h-3.5 text-red-400" /></button>
                   </div>
-                ))}
+                )})}
                 <div className="grid grid-cols-[1fr_auto_auto_auto] items-center px-4 py-3 bg-orange-50 rounded-b-xl">
                   <span className="text-sm font-bold text-gray-800">Total</span><span></span>
-                  <span className="text-sm font-bold text-orange-600 text-right px-2">{totalCalories} kcal</span><span></span>
+                  <div className="text-right px-2">
+                    <p className="text-xs font-bold text-orange-600">{totalCalories} kcal</p>
+                    <p className="text-xs font-bold text-blue-500">{Math.round(totalProtein)}g protein</p>
+                  </div>
+                  <span></span>
                 </div>
               </CardContent>
             </Card>
@@ -203,6 +223,7 @@ export default function NutritionPage() {
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-orange-500">{dayTotal} kcal</p>
+                          <p className="text-xs text-blue-500">{dayLogs.reduce((a: number, l: any) => a + (estimateProtein(l.food_name) * l.quantity), 0)}g protein</p>
                           <p className="text-xs text-gray-400">{Math.round(dayProgress)}% of target</p>
                         </div>
                       </div>

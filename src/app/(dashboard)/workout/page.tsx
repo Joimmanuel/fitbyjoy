@@ -195,6 +195,14 @@ export default function WorkoutPage() {
     s.exercise_logs?.some((e: any) => e.muscle_group === mgFilter)
   )
 
+  // Group sessions by date
+  const groupedByDate = filteredSessions.reduce((acc: Record<string, any[]>, s: any) => {
+    if (!acc[s.date]) acc[s.date] = []
+    acc[s.date].push(s)
+    return acc
+  }, {})
+  const sortedGroupDates = Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a))
+
   return (
     <div className="px-4 pt-6">
       <div className="mb-4">
@@ -410,11 +418,12 @@ export default function WorkoutPage() {
             </div>
           ) : (
             <div className="space-y-3 pb-4">
-              {filteredSessions.map((session: any) => {
-                const logs: any[] = session.exercise_logs || []
-                const uniqueMGs = [...new Set(logs.map((e: any) => e.muscle_group).filter(Boolean))] as MuscleGroup[]
+              {sortedGroupDates.map(date => {
+                const daySessions = groupedByDate[date]
+                const allLogs: any[] = daySessions.flatMap((s: any) => s.exercise_logs || [])
+                const uniqueMGs = [...new Set(allLogs.map((e: any) => e.muscle_group).filter(Boolean))] as MuscleGroup[]
                 return (
-                  <Card key={session.id} className="border-0 shadow-sm overflow-hidden">
+                  <Card key={date} className="border-0 shadow-sm overflow-hidden">
                     <div className="h-1 flex">
                       {uniqueMGs.length > 0
                         ? uniqueMGs.map(mg => <div key={mg} className="flex-1" style={{ backgroundColor: MUSCLE_GROUP_COLORS[mg] }} />)
@@ -424,7 +433,7 @@ export default function WorkoutPage() {
                       <div className="flex items-center justify-between mb-2">
                         <div>
                           <p className="font-semibold text-gray-900">
-                            {format(new Date(session.date + 'T00:00:00'), 'dd MMM yyyy')}
+                            {format(new Date(date + 'T00:00:00'), 'dd MMM yyyy')}
                           </p>
                           <div className="flex flex-wrap gap-1 mt-1">
                             {uniqueMGs.map(mg => {
@@ -434,13 +443,13 @@ export default function WorkoutPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-400">{logs.length} exercises</span>
-                          <button onClick={() => handleDeleteSession(session.id)}>
+                          <span className="text-sm text-gray-400">{allLogs.length} exercises</span>
+                          <button onClick={() => daySessions.forEach((s: any) => handleDeleteSession(s.id))}>
                             <Trash2 className="w-4 h-4 text-red-300 hover:text-red-500" />
                           </button>
                         </div>
                       </div>
-                      {logs.map((ex: any) => {
+                      {allLogs.map((ex: any) => {
                         const c = ex.muscle_group ? MUSCLE_GROUP_COLORS[ex.muscle_group as MuscleGroup] : '#6b7280'
                         return (
                           <div key={ex.id} className="flex justify-between text-sm py-1 border-b last:border-0 items-center">
@@ -450,10 +459,10 @@ export default function WorkoutPage() {
                             </div>
                             <div className="flex items-center gap-2 ml-2 shrink-0">
                               <span className="text-gray-500 text-xs">{ex.weight}{ex.unit} · {ex.sets}×{ex.reps}</span>
-                              <button onClick={() => setEditEx({ ...ex, weight: String(ex.weight), sets: String(ex.sets), reps: String(ex.reps), sessionId: session.id })}>
+                              <button onClick={() => setEditEx({ ...ex, weight: String(ex.weight), sets: String(ex.sets), reps: String(ex.reps) })}>
                                 <Pencil className="w-3.5 h-3.5 text-gray-300 hover:text-primary" />
                               </button>
-                              <button onClick={() => handleDeleteExercise(ex.id, session.id)}>
+                              <button onClick={() => handleDeleteExercise(ex.id, daySessions.find((s: any) => s.exercise_logs?.some((l: any) => l.id === ex.id))?.id)}>
                                 <Trash2 className="w-3.5 h-3.5 text-gray-300 hover:text-red-500" />
                               </button>
                             </div>

@@ -1,0 +1,57 @@
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>We'll Be Right Back!</title>
+        <style>
+            body {
+                margin: 0;
+                font-family: Arial, sans-serif;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                background-color: #f4f4f4;
+                color: #333;
+                text-align: center;
+            }
+            .container {
+                max-width: 600px;
+                padding: 20px;
+            }
+            h1 {
+                font-size: 2rem;
+                color: #0056b3;
+                margin-bottom: 10px;
+            }
+            p {
+                font-size: 1rem;
+                margin-bottom: 20px;
+                line-height: 1.5;
+            }
+            .timer {
+                font-weight: bold;
+                color: #e63946;
+            }
+            @media (prefers-color-scheme: dark) {
+              body {
+                background-color: #1e2122;
+                color: #c8c3bc;
+              }
+              h1 {
+                color: #61b7ff;
+              }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>We'll Be Right Back!</h1>
+            <p>Our site is currently undergoing scheduled maintenance. We're working hard to bring you a better experience. Thank you for your patience and understanding.</p>
+            <p>If all goes to plan, we'll be back online <span class="timer">soon</span>. 🚀</p>
+        </div>
+    </body>
+    </html>
+    

@@ -33,51 +33,51 @@ export const EXERCISE_RECOMMENDATIONS: Record<MuscleGroup, string[]> = {
 
 export const EXERCISE_DETAILS: Record<MuscleGroup, ExerciseInfo[]> = {
   Chest: [
-    { name: 'Chest Press Machine', img: 'https://muscles.wiki/img/exercises/chest-press-machine.gif', sets: 4, reps: 12 },
-    { name: 'Incline Press Machine', img: 'https://muscles.wiki/img/exercises/incline-bench-press.gif', sets: 3, reps: 12 },
-    { name: 'Pec Deck', img: 'https://muscles.wiki/img/exercises/pec-deck-fly.gif', sets: 3, reps: 15 },
-    { name: 'Cable Fly', img: 'https://muscles.wiki/img/exercises/cable-fly.gif', sets: 3, reps: 15 },
-    { name: 'Smith Machine Bench Press', img: 'https://muscles.wiki/img/exercises/smith-machine-bench-press.gif', sets: 4, reps: 10 },
+    { name: 'Chest Press Machine', img: '/exercises/chest-press-machine.jpg', sets: 4, reps: 12 },
+    { name: 'Incline Press Machine', img: '/exercises/incline-press-machine.jpg', sets: 3, reps: 12 },
+    { name: 'Pec Deck', img: '/exercises/pec-deck.jpg', sets: 3, reps: 15 },
+    { name: 'Cable Fly', img: '/exercises/cable-fly.jpg', sets: 3, reps: 15 },
+    { name: 'Smith Machine Bench Press', img: '/exercises/smith-bench-press.jpg', sets: 4, reps: 10 },
   ],
   Back: [
-    { name: 'Lat Pulldown', img: 'https://muscles.wiki/img/exercises/lat-pulldown.gif', sets: 4, reps: 12 },
-    { name: 'Seated Row', img: 'https://muscles.wiki/img/exercises/seated-cable-row.gif', sets: 4, reps: 12 },
-    { name: 'T Bar Row', img: 'https://muscles.wiki/img/exercises/t-bar-row.gif', sets: 3, reps: 10 },
-    { name: 'Pull Up Assistance Machine', img: 'https://muscles.wiki/img/exercises/assisted-pull-up.gif', sets: 3, reps: 10 },
-    { name: 'Cable Row', img: 'https://muscles.wiki/img/exercises/cable-row.gif', sets: 3, reps: 12 },
+    { name: 'Lat Pulldown', img: '/exercises/lat-pulldown.jpg', sets: 4, reps: 12 },
+    { name: 'Seated Row', img: '/exercises/seated-row.jpg', sets: 4, reps: 12 },
+    { name: 'T Bar Row', img: '/exercises/t-bar-row.jpg', sets: 3, reps: 10 },
+    { name: 'Pull Up Assistance Machine', img: '/exercises/pull-up-assist.jpg', sets: 3, reps: 10 },
+    { name: 'Cable Row', img: '/exercises/cable-row.jpg', sets: 3, reps: 12 },
   ],
   Shoulder: [
-    { name: 'Shoulder Press Machine', img: 'https://muscles.wiki/img/exercises/machine-shoulder-press.gif', sets: 4, reps: 12 },
-    { name: 'Lateral Raise Machine', img: 'https://muscles.wiki/img/exercises/machine-lateral-raise.gif', sets: 3, reps: 15 },
-    { name: 'Rear Delt Fly', img: 'https://muscles.wiki/img/exercises/rear-delt-fly.gif', sets: 3, reps: 15 },
-    { name: 'Cable Front Raise', img: 'https://muscles.wiki/img/exercises/cable-front-raise.gif', sets: 3, reps: 12 },
+    { name: 'Shoulder Press Machine', img: '/exercises/shoulder-press-machine.jpg', sets: 4, reps: 12 },
+    { name: 'Lateral Raise Machine', img: '/exercises/lateral-raise.jpg', sets: 3, reps: 15 },
+    { name: 'Rear Delt Fly', img: '/exercises/rear-delt-fly.jpg', sets: 3, reps: 15 },
+    { name: 'Cable Front Raise', img: '/exercises/cable-front-raise.jpg', sets: 3, reps: 12 },
   ],
   Triceps: [
-    { name: 'Seated Tricep Extension', img: 'https://muscles.wiki/img/exercises/seated-tricep-extension.gif', sets: 3, reps: 15 },
-    { name: 'Cable Pushdown', img: 'https://muscles.wiki/img/exercises/cable-pushdown.gif', sets: 3, reps: 15 },
-    { name: 'Rope Pushdown', img: 'https://muscles.wiki/img/exercises/rope-pushdown.gif', sets: 3, reps: 15 },
-    { name: 'Assisted Dip Machine', img: 'https://muscles.wiki/img/exercises/assisted-dip.gif', sets: 3, reps: 12 },
-    { name: 'Overhead Extension', img: 'https://muscles.wiki/img/exercises/overhead-tricep-extension.gif', sets: 3, reps: 12 },
+    { name: 'Seated Tricep Extension', img: '/exercises/tricep-extension.jpg', sets: 3, reps: 15 },
+    { name: 'Cable Pushdown', img: '/exercises/cable-pushdown.jpg', sets: 3, reps: 15 },
+    { name: 'Rope Pushdown', img: '/exercises/rope-pushdown.jpg', sets: 3, reps: 15 },
+    { name: 'Assisted Dip Machine', img: '/exercises/assisted-dip.jpg', sets: 3, reps: 12 },
+    { name: 'Overhead Extension', img: '/exercises/overhead-extension.jpg', sets: 3, reps: 12 },
   ],
   Biceps: [
-    { name: 'Preacher Curl Machine', img: 'https://muscles.wiki/img/exercises/preacher-curl.gif', sets: 3, reps: 12 },
-    { name: 'Cable Curl', img: 'https://muscles.wiki/img/exercises/cable-curl.gif', sets: 3, reps: 12 },
-    { name: 'Hammer Curl', img: 'https://muscles.wiki/img/exercises/hammer-curl.gif', sets: 3, reps: 12 },
-    { name: 'EZ Curl Bar', img: 'https://muscles.wiki/img/exercises/ez-bar-curl.gif', sets: 4, reps: 10 },
+    { name: 'Preacher Curl Machine', img: '/exercises/preacher-curl.jpg', sets: 3, reps: 12 },
+    { name: 'Cable Curl', img: '/exercises/cable-curl.jpg', sets: 3, reps: 12 },
+    { name: 'Hammer Curl', img: '/exercises/hammer-curl.jpg', sets: 3, reps: 12 },
+    { name: 'EZ Curl Bar', img: '/exercises/ez-curl.jpg', sets: 4, reps: 10 },
   ],
   Leg: [
-    { name: 'Leg Press', img: 'https://muscles.wiki/img/exercises/leg-press.gif', sets: 4, reps: 12 },
-    { name: 'Leg Extension', img: 'https://muscles.wiki/img/exercises/leg-extension.gif', sets: 3, reps: 15 },
-    { name: 'Leg Curl', img: 'https://muscles.wiki/img/exercises/leg-curl.gif', sets: 3, reps: 15 },
-    { name: 'Calf Raise Machine', img: 'https://muscles.wiki/img/exercises/calf-raise.gif', sets: 4, reps: 20 },
-    { name: 'Hack Squat', img: 'https://muscles.wiki/img/exercises/hack-squat.gif', sets: 4, reps: 10 },
+    { name: 'Leg Press', img: '/exercises/leg-press.jpg', sets: 4, reps: 12 },
+    { name: 'Leg Extension', img: '/exercises/leg-extension.jpg', sets: 3, reps: 15 },
+    { name: 'Leg Curl', img: '/exercises/leg-curl.jpg', sets: 3, reps: 15 },
+    { name: 'Calf Raise Machine', img: '/exercises/calf-raise.jpg', sets: 4, reps: 20 },
+    { name: 'Hack Squat', img: '/exercises/hack-squat.jpg', sets: 4, reps: 10 },
   ],
   'Full Body': [
-    { name: 'Deadlift', img: 'https://muscles.wiki/img/exercises/deadlift.gif', sets: 4, reps: 8 },
-    { name: 'Squat', img: 'https://muscles.wiki/img/exercises/squat.gif', sets: 4, reps: 10 },
-    { name: 'Barbell Row', img: 'https://muscles.wiki/img/exercises/barbell-row.gif', sets: 4, reps: 10 },
-    { name: 'Overhead Press', img: 'https://muscles.wiki/img/exercises/overhead-press.gif', sets: 3, reps: 10 },
-    { name: 'Pull Up', img: 'https://muscles.wiki/img/exercises/pull-up.gif', sets: 3, reps: 8 },
+    { name: 'Deadlift', img: '/exercises/deadlift.jpg', sets: 4, reps: 8 },
+    { name: 'Squat', img: '/exercises/squat.jpg', sets: 4, reps: 10 },
+    { name: 'Barbell Row', img: '/exercises/barbell-row.jpg', sets: 4, reps: 10 },
+    { name: 'Overhead Press', img: '/exercises/overhead-press.jpg', sets: 3, reps: 10 },
+    { name: 'Pull Up', img: '/exercises/pull-up.jpg', sets: 3, reps: 8 },
   ],
 }
 
@@ -131,6 +131,32 @@ export function estimateCalories(foodName: string): number {
     if (lower.includes(key) || key.includes(lower)) return cal
   }
   return 200
+}
+
+// Protein estimates in grams per serving
+export const FOOD_PROTEIN: Record<string, number> = {
+  'nasi ayam': 30, 'nasi goreng': 12, 'nasi putih': 3, 'nasi uduk': 5,
+  'ayam goreng': 28, 'ayam bakar': 26, 'ayam rebus': 25,
+  'telur rebus': 6, 'telur goreng': 6, 'telur dadar': 7,
+  'pisang': 1, 'apel': 0, 'jeruk': 1, 'semangka': 1,
+  'roti tawar': 3, 'roti gandum': 4,
+  'mie goreng': 10, 'mie rebus': 8, 'indomie': 8,
+  'gado gado': 12, 'soto ayam': 18, 'bakso': 14, 'sate ayam': 22, 'rendang': 28,
+  'tempe goreng': 11, 'tahu goreng': 8,
+  'sayur bayam': 3, 'sayur kangkung': 2,
+  'susu': 8, 'yogurt': 10, 'protein shake': 25, 'oatmeal': 5,
+  'granola': 4, 'salad': 3, 'sandwich': 15, 'burger': 20,
+  'pizza': 12, 'kentang goreng': 3, 'ubi rebus': 2, 'singkong rebus': 1,
+}
+
+export function estimateProtein(foodName: string): number {
+  const lower = foodName.toLowerCase().trim()
+  if (FOOD_PROTEIN[lower]) return FOOD_PROTEIN[lower]
+  for (const [key, protein] of Object.entries(FOOD_PROTEIN)) {
+    if (lower.includes(key) || key.includes(lower)) return protein
+  }
+  // fallback: estimate ~10% of calories as protein calories / 4
+  return Math.round(estimateCalories(foodName) * 0.1 / 4)
 }
 
 export const MUSCLE_GROUP_COLORS: Record<MuscleGroup, string> = {
