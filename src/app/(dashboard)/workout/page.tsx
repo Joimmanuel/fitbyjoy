@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { Plus, Trash2, Loader2, Dumbbell, Pencil, Check, ChevronLeft, Zap } from 'lucide-react'
-import { MUSCLE_GROUPS, EXERCISE_DETAILS, MUSCLE_GROUP_COLORS } from '@/lib/constants'
+import { MUSCLE_GROUPS, EXERCISE_DETAILS, MUSCLE_GROUP_COLORS, MOTIVATIONAL_QUOTES } from '@/lib/constants'
 import { MuscleGroup, WeightUnit } from '@/types'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/components/layout/UserProvider'
@@ -47,10 +47,14 @@ export default function WorkoutPage() {
   const [step, setStep] = useState<'muscle' | 'exercises'>('muscle')
   const [selectedMG, setSelectedMG] = useState<MuscleGroup | null>(null)
   const [quickEx, setQuickEx] = useState<{ name: string; weight: string; unit: WeightUnit; sets: string; reps: string } | null>(null)
+  const [name, setName] = useState('Athlete')
 
   useEffect(() => {
     if (!userId) return
     loadSessions()
+    supabase.from('profiles').select('name').eq('id', userId).single().then(({ data }) => {
+      if (data?.name) setName(data.name)
+    })
   }, [userId])
 
   async function loadSessions() {
@@ -203,12 +207,24 @@ export default function WorkoutPage() {
   }, {})
   const sortedGroupDates = Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a))
 
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+  const quote = MOTIVATIONAL_QUOTES[new Date().getDate() % MOTIVATIONAL_QUOTES.length]
+
   return (
     <div className="px-4 pt-6">
       <div className="mb-4">
-        <h1 className="text-xl font-bold text-gray-900">Workout Log</h1>
-        <p className="text-sm text-gray-500">Track your exercises & muscle groups</p>
+        <p className="text-sm text-gray-500">{greeting} 👋</p>
+        <h1 className="text-2xl font-bold text-gray-900">{name}</h1>
+        <p className="text-sm text-gray-400">{format(new Date(), 'EEEE, dd MMMM yyyy')}</p>
       </div>
+
+      <Card className="border-0 shadow-sm bg-gradient-to-r from-gray-900 to-gray-700 text-white mb-4">
+        <CardContent className="p-4">
+          <p className="text-xs opacity-60 mb-1">💬 Quote of the day</p>
+          <p className="text-sm font-medium leading-relaxed">&ldquo;{quote.text}&rdquo;</p>
+        </CardContent>
+      </Card>
       <Tabs defaultValue="log">
         <TabsList className="w-full mb-4">
           <TabsTrigger value="log" className="flex-1">Log</TabsTrigger>
