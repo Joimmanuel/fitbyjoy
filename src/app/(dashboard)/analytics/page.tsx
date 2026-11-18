@@ -188,7 +188,7 @@ export default function AnalyticsPage() {
       setData({
         totalWorkoutsMonth: monthSessions.length, mostTrainedMuscle, strongestExercise,
         avgWorkoutsPerWeek, streak: currentStreak, totalVolume, weeklyData, muscleDistribution,
-        weightTrend: [], topPRs, volumeGrowth, avgRestDays, neglectedMuscles, muscleBalance,
+        topPRs, volumeGrowth, avgRestDays, neglectedMuscles, muscleBalance,
         avgDailyCalories, daysOverTarget, daysUnderTarget, topFoods, nutritionTarget, weeklyCalories,
       })
     }
