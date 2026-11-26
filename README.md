@@ -25,7 +25,9 @@ Aplikasi web fitness personal untuk mencatat progres gym, tracking kalori harian
 | Fitur | Deskripsi |
 |-------|-----------|
 | 🏠 Dashboard | Ringkasan harian, streak, weekly goal, top progress, motivational quote |
-| 💪 Workout Log | Catat latihan dengan muscle group per exercise + rekomendasi exercise |
+| 💪 Workout Log | Catat latihan per muscle group (Chest, Back, Shoulder, Leg, Biceps, Triceps) |
+| 🔍 Last Progress di Input | Auto-fill weight/sets/reps dari sesi terakhir saat tambah exercise |
+| 🗓️ Workout Combinations | Rekomendasi kombinasi latihan (Push/Pull/Leg/Upper/Arms) berdasarkan otot yang belum dilatih |
 | ✏️ Edit & Delete History | Edit atau hapus exercise/sesi dari history |
 | 🏆 PR Badge | Otomatis detect Personal Record baru saat save workout |
 | 📈 Exercise Progress | Grafik perkembangan beban per exercise |
@@ -73,28 +75,39 @@ Aplikasi web fitness personal untuk mencatat progres gym, tracking kalori harian
 ```
 ┌─────────────────────────────┐
 │  Workout Log                │
-│  ┌──────────┬─────────────┐ │
-│  │Log Workout│  History   │ │
-│  └──────────┴─────────────┘ │
+│  ┌──────┬───────────┬──────┐│
+│  │ Log  │ Recommend │History│
+│  └──────┴───────────┴──────┘│
 │                             │
+│  [Log Tab]                  │
 │  Date: [11/01/2026      ]   │
 │                             │
-│  ── Exercise 1 ──           │
-│  Muscle Group: [Triceps  ]  │
-│  [Seated Tricep Ext.] [+]   │
-│  [Cable Pushdown    ] [+]   │
-│  Name: [Seated Tricep Ext.] │
-│  Weight: [20] Unit: [KG ]   │
-│  Sets:   [4 ] Reps:  [12]   │
+│  Pick Muscle Group          │
+│  ┌─────────┐ ┌──────────┐  │
+│  │🏋️ Chest │ │🔙 Back   │  │
+│  │5 exer.  │ │6 exer.   │  │
+│  └─────────┘ └──────────┘  │
+│  ┌─────────┐ ┌──────────┐  │
+│  │🏔️ Shldr │ │🦵 Leg    │  │
+│  └─────────┘ └──────────┘  │
 │                             │
-│  ── Exercise 2 ──           │
-│  Muscle Group: [Chest    ]  │
-│  Name: [Chest Press      ]  │
-│  Weight: [40] Unit: [KG ]   │
-│  Sets:   [4 ] Reps:  [10]   │
+│  [Recommend Tab]            │
+│  ⚡ Workout Combinations    │
+│  ┌─────────────────────┐   │
+│  │🔴 Push Day ★ Recom. │   │
+│  │ Chest · Shoulder ·  │   │
+│  │ Triceps             │   │
+│  │ Chest Press  20KG + │   │
+│  │ Shldr Press  30KG + │   │
+│  └─────────────────────┘   │
 │                             │
-│  [+ Add Exercise]           │
-│  [    Save Workout    ]     │
+│  [Quick Add Dialog]         │
+│  Seated Tricep Extension    │
+│  Last · 03 Jan 2026         │
+│  20KG · 3×15                │
+│  Weight [20] Unit [KG]      │
+│  Sets   [3 ] Reps [15]      │
+│  [  Add to Session  ]       │
 └─────────────────────────────┘
 ```
 
@@ -282,10 +295,15 @@ Buka [http://localhost:3000](http://localhost:3000)
 ### Log Workout
 1. Tap menu **Workout** (💪)
 2. Pilih tanggal
-3. Per exercise: pilih **Muscle Group** → tap rekomendasi atau isi nama manual
-4. Isi weight, unit, sets, reps
-5. Tambah exercise lain jika perlu (beda muscle group boleh)
-6. Tap **Save Workout**
+3. Tab **Log** → pilih Muscle Group → tap exercise → dialog auto-fill dari sesi terakhir
+4. Sesuaikan weight/sets/reps jika perlu → tap **Add to Session**
+5. Tap **+ More Muscles** untuk tambah muscle group lain
+6. Tap **Save**
+
+### Cek Rekomendasi Kombinasi
+1. Tap tab **Recommend** di halaman Workout
+2. Kombinasi teratas = otot yang paling lama tidak dilatih
+3. Tap **+ Add** langsung dari card untuk tambah ke sesi
 
 ### Cek Progress
 1. Tap menu **Progress** (📈)
