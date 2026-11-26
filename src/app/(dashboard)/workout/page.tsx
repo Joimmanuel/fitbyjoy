@@ -47,6 +47,7 @@ export default function WorkoutPage() {
   const [step, setStep] = useState<'muscle' | 'exercises'>('muscle')
   const [selectedMG, setSelectedMG] = useState<MuscleGroup | null>(null)
   const [quickEx, setQuickEx] = useState<{ name: string; weight: string; unit: WeightUnit; sets: string; reps: string } | null>(null)
+  const [lastLogs, setLastLogs] = useState<Record<string, { weight: number; unit: WeightUnit; sets: number; reps: number; date: string }>>({})
   const [name, setName] = useState('Athlete')
 
   useEffect(() => {
@@ -66,6 +67,15 @@ export default function WorkoutPage() {
       .order('date', { ascending: false })
       .limit(30)
     setSessions(data || [])
+    // Build last log map from fetched sessions
+    const map: Record<string, { weight: number; unit: WeightUnit; sets: number; reps: number; date: string }> = {}
+    const sorted = (data || []).slice().sort((a: any, b: any) => a.date.localeCompare(b.date))
+    sorted.forEach((s: any) => {
+      s.exercise_logs?.forEach((log: any) => {
+        map[log.exercise_name] = { weight: log.weight, unit: log.unit, sets: log.sets, reps: log.reps, date: s.date }
+      })
+    })
+    setLastLogs(map)
   }
 
   function selectMuscleGroup(mg: MuscleGroup) {
@@ -74,7 +84,14 @@ export default function WorkoutPage() {
   }
 
   function openQuickAdd(name: string, defaultSets: number, defaultReps: number) {
-    setQuickEx({ name, weight: '', unit: 'KG', sets: String(defaultSets), reps: String(defaultReps) })
+    const last = lastLogs[name]
+    setQuickEx({
+      name,
+      weight: last ? String(last.weight) : '',
+      unit: last ? last.unit : 'KG',
+      sets: last ? String(last.sets) : String(defaultSets),
+      reps: last ? String(last.reps) : String(defaultReps),
+    })
   }
 
   function addToSession() {
@@ -287,7 +304,13 @@ export default function WorkoutPage() {
                       <CardContent className="p-3 flex-1 flex flex-col justify-between">
                         <div>
                           <p className="text-sm font-semibold text-gray-800 leading-tight">{ex.name}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">{ex.sets} sets × {ex.reps} reps</p>
+                          {lastLogs[ex.name] ? (
+                            <p className="text-xs mt-0.5" style={{ color: MUSCLE_GROUP_COLORS[selectedMG] }}>
+                              Last: {lastLogs[ex.name].weight}{lastLogs[ex.name].unit} · {lastLogs[ex.name].sets}×{lastLogs[ex.name].reps}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-gray-400 mt-0.5">{ex.sets} sets × {ex.reps} reps</p>
+                          )}
                         </div>
                         <button
                           onClick={() => openQuickAdd(ex.name, ex.sets, ex.reps)}
@@ -365,7 +388,13 @@ export default function WorkoutPage() {
                           <CardContent className="p-3 flex-1 flex flex-col justify-between">
                             <div>
                               <p className="text-sm font-semibold text-gray-800 leading-tight">{ex.name}</p>
-                              <p className="text-xs text-gray-400 mt-0.5">{ex.sets} sets × {ex.reps} reps</p>
+                              {lastLogs[ex.name] ? (
+                                <p className="text-xs mt-0.5" style={{ color: MUSCLE_GROUP_COLORS[mg] }}>
+                                  Last: {lastLogs[ex.name].weight}{lastLogs[ex.name].unit} · {lastLogs[ex.name].sets}×{lastLogs[ex.name].reps}
+                                </p>
+                              ) : (
+                                <p className="text-xs text-gray-400 mt-0.5">{ex.sets} sets × {ex.reps} reps</p>
+                              )}
                             </div>
                             <button
                               onClick={() => { setSelectedMG(mg); openQuickAdd(ex.name, ex.sets, ex.reps) }}
@@ -398,7 +427,13 @@ export default function WorkoutPage() {
                       <CardContent className="p-3 flex-1 flex flex-col justify-between">
                         <div>
                           <p className="text-sm font-semibold text-gray-800 leading-tight">{ex.name}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">{ex.sets} sets × {ex.reps} reps</p>
+                          {lastLogs[ex.name] ? (
+                            <p className="text-xs mt-0.5 text-[#00897B]">
+                              Last: {lastLogs[ex.name].weight}{lastLogs[ex.name].unit} · {lastLogs[ex.name].sets}×{lastLogs[ex.name].reps}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-gray-400 mt-0.5">{ex.sets} sets × {ex.reps} reps</p>
+                          )}
                         </div>
                         <button
                           onClick={() => { setSelectedMG('Full Body'); openQuickAdd(ex.name, ex.sets, ex.reps) }}
@@ -500,6 +535,27 @@ export default function WorkoutPage() {
           <DialogHeader><DialogTitle>{quickEx?.name}</DialogTitle></DialogHeader>
           {quickEx && (
             <div className="space-y-3">
+              {/* Last progress banner */}
+              {lastLogs[quickEx.name] && (() => {
+                const last = lastLogs[quickEx.name]
+                const diff = parseFloat(quickEx.weight || '0') - last.weight
+                const color = selectedMG ? MUSCLE_GROUP_COLORS[selectedMG] : '#6b7280'
+                return (
+                  <div className="rounded-xl p-3 flex items-center justify-between" style={{ backgroundColor: `${color}12`, border: `1px solid ${color}30` }}>
+                    <div>
+                      <p className="text-xs text-gray-400">Last · {format(new Date(last.date + 'T00:00:00'), 'dd MMM yyyy')}</p>
+                      <p className="text-sm font-bold mt-0.5" style={{ color }}>{last.weight}{last.unit} · {last.sets}×{last.reps}</p>
+                    </div>
+                    {diff !== 0 && !isNaN(diff) && (
+                      <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                        diff > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-500'
+                      }`}>
+                        {diff > 0 ? '+' : ''}{diff}{last.unit}
+                      </span>
+                    )}
+                  </div>
+                )
+              })()}
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Weight</Label>
