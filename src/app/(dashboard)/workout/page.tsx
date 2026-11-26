@@ -128,7 +128,6 @@ export default function WorkoutPage() {
         .flatMap((s: any) => s.exercise_logs?.map((e: any) => e.muscle_group) || [])
         .filter(Boolean)
     )
-    // Score each split: more muscles not recently trained = higher score
     return SPLITS.map(split => ({
       ...split,
       score: split.muscles.filter(mg => !recentMGs.has(mg)).length,

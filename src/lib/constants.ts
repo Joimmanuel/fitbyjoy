@@ -28,7 +28,6 @@ export const EXERCISE_RECOMMENDATIONS: Record<MuscleGroup, string[]> = {
   Triceps: ['Seated Tricep Extension','Cable Pushdown','Rope Pushdown','Assisted Dip Machine','Overhead Extension'],
   Biceps: ['Preacher Curl Machine','Cable Curl','Hammer Curl','EZ Curl Bar'],
   Leg: ['Leg Press','Leg Extension','Leg Curl','Calf Raise Machine','Hack Squat'],
-  'Full Body': ['Deadlift','Squat','Barbell Row','Overhead Press','Pull Up'],
 }
 
 export const EXERCISE_DETAILS: Record<MuscleGroup, ExerciseInfo[]> = {
@@ -74,13 +73,6 @@ export const EXERCISE_DETAILS: Record<MuscleGroup, ExerciseInfo[]> = {
     { name: 'Leg Curl', img: '/exercises/leg-curl.jpg', sets: 3, reps: 15 },
     { name: 'Calf Raise Machine', img: '/exercises/calf-raise.jpg', sets: 4, reps: 20 },
     { name: 'Hack Squat', img: '/exercises/hack-squat.jpg', sets: 4, reps: 10 },
-  ],
-  'Full Body': [
-    { name: 'Deadlift', img: '/exercises/deadlift.jpg', sets: 4, reps: 8 },
-    { name: 'Squat', img: '/exercises/squat.jpg', sets: 4, reps: 10 },
-    { name: 'Barbell Row', img: '/exercises/barbell-row.jpg', sets: 4, reps: 10 },
-    { name: 'Overhead Press', img: '/exercises/overhead-press.jpg', sets: 3, reps: 10 },
-    { name: 'Pull Up', img: '/exercises/pull-up.jpg', sets: 3, reps: 8 },
   ],
 }
 
@@ -169,5 +161,4 @@ export const MUSCLE_GROUP_COLORS: Record<MuscleGroup, string> = {
   Leg: '#00BFA5',
   Biceps: '#8b5cf6',
   Triceps: '#1AD1B9',
-  'Full Body': '#00897B',
 }
