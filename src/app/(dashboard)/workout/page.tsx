@@ -108,8 +108,19 @@ export default function WorkoutPage() {
     toast.success(`${quickEx.name} added!`)
   }
 
-  // Recommend muscles not trained in last 3 days
-  function getRecommendedMuscles(): MuscleGroup[] {
+  // Workout split combinations
+  const SPLITS: { label: string; muscles: MuscleGroup[]; emoji: string; desc: string }[] = [
+    { label: 'Push Day', emoji: '🔴', muscles: ['Chest', 'Shoulder', 'Triceps'], desc: 'Chest · Shoulder · Triceps' },
+    { label: 'Pull Day', emoji: '🔵', muscles: ['Back', 'Biceps'], desc: 'Back · Biceps' },
+    { label: 'Leg Day', emoji: '🟢', muscles: ['Leg'], desc: 'Leg' },
+    { label: 'Upper Body', emoji: '🟡', muscles: ['Chest', 'Back', 'Shoulder'], desc: 'Chest · Back · Shoulder' },
+    { label: 'Arms Day', emoji: '🟣', muscles: ['Biceps', 'Triceps'], desc: 'Biceps · Triceps' },
+    { label: 'Chest & Triceps', emoji: '🟠', muscles: ['Chest', 'Triceps'], desc: 'Chest · Triceps' },
+    { label: 'Back & Biceps', emoji: '🩵', muscles: ['Back', 'Biceps'], desc: 'Back · Biceps' },
+    { label: 'Shoulder & Arms', emoji: '🩶', muscles: ['Shoulder', 'Biceps', 'Triceps'], desc: 'Shoulder · Biceps · Triceps' },
+  ]
+
+  function getRecommendedSplit() {
     const cutoff = format(subDays(new Date(), 3), 'yyyy-MM-dd')
     const recentMGs = new Set(
       sessions
@@ -117,7 +128,11 @@ export default function WorkoutPage() {
         .flatMap((s: any) => s.exercise_logs?.map((e: any) => e.muscle_group) || [])
         .filter(Boolean)
     )
-    return MUSCLE_GROUPS.filter(mg => !recentMGs.has(mg))
+    // Score each split: more muscles not recently trained = higher score
+    return SPLITS.map(split => ({
+      ...split,
+      score: split.muscles.filter(mg => !recentMGs.has(mg)).length,
+    })).sort((a, b) => b.score - a.score)
   }
 
   async function handleSubmit(e?: React.FormEvent) {
@@ -359,93 +374,61 @@ export default function WorkoutPage() {
           <div className="space-y-4 pb-4">
             <div className="flex items-center gap-2">
               <Zap className="w-4 h-4 text-yellow-500" />
-              <p className="text-sm font-semibold text-gray-700">Today&apos;s Recommendation</p>
+              <p className="text-sm font-semibold text-gray-700">Workout Combinations</p>
             </div>
-            <p className="text-xs text-gray-400">Based on muscles not trained in the last 3 days</p>
-            {getRecommendedMuscles().length === 0 ? (
-              <Card className="border-0 shadow-sm">
-                <CardContent className="p-6 text-center">
-                  <p className="text-2xl mb-2">🎉</p>
-                  <p className="text-sm font-semibold text-gray-700">All muscles trained recently!</p>
-                  <p className="text-xs text-gray-400 mt-1">Take a rest day or do Full Body</p>
-                </CardContent>
-              </Card>
-            ) : (
-              getRecommendedMuscles().map(mg => (
-                <div key={mg}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: MUSCLE_GROUP_COLORS[mg] }} />
-                    <p className="text-sm font-semibold text-gray-700">{mg}</p>
-                    <span className="text-xs text-gray-400">— recommended today</span>
+            <p className="text-xs text-gray-400">Sorted by muscles you haven&apos;t trained in 3 days</p>
+            {getRecommendedSplit().map((split, idx) => (
+              <Card key={split.label} className={`border-0 shadow-sm overflow-hidden ${idx === 0 ? 'ring-2 ring-yellow-400' : ''}`}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{split.emoji}</span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-gray-800 text-sm">{split.label}</p>
+                          {idx === 0 && <Badge className="text-xs bg-yellow-400 text-yellow-900 border-0">Recommended</Badge>}
+                        </div>
+                        <p className="text-xs text-gray-400">{split.desc}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      {split.muscles.map(mg => (
+                        <span key={mg} className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: MUSCLE_GROUP_COLORS[mg] }} />
+                      ))}
+                    </div>
                   </div>
+                  {/* Top 1 exercise per muscle */}
                   <div className="space-y-2">
-                    {EXERCISE_DETAILS[mg].slice(0, 3).map(ex => (
-                      <Card key={ex.name} className="border-0 shadow-sm overflow-hidden">
-                        <div className="flex">
-                          <div className="relative w-24 h-20 shrink-0">
-                            <Image src={ex.img} alt={ex.name} fill className="object-cover" unoptimized />
-                          </div>
-                          <CardContent className="p-3 flex-1 flex flex-col justify-between">
-                            <div>
-                              <p className="text-sm font-semibold text-gray-800 leading-tight">{ex.name}</p>
+                    {split.muscles.map(mg => {
+                      const ex = EXERCISE_DETAILS[mg][0]
+                      return (
+                        <div key={mg} className="flex items-center justify-between rounded-xl px-3 py-2" style={{ backgroundColor: `${MUSCLE_GROUP_COLORS[mg]}10` }}>
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: MUSCLE_GROUP_COLORS[mg] }} />
+                            <div className="min-w-0">
+                              <p className="text-xs font-semibold text-gray-700 truncate">{ex.name}</p>
                               {lastLogs[ex.name] ? (
-                                <p className="text-xs mt-0.5" style={{ color: MUSCLE_GROUP_COLORS[mg] }}>
-                                  Last: {lastLogs[ex.name].weight}{lastLogs[ex.name].unit} · {lastLogs[ex.name].sets}×{lastLogs[ex.name].reps}
+                                <p className="text-xs" style={{ color: MUSCLE_GROUP_COLORS[mg] }}>
+                                  Last: {lastLogs[ex.name].weight}{lastLogs[ex.name].unit}
                                 </p>
                               ) : (
-                                <p className="text-xs text-gray-400 mt-0.5">{ex.sets} sets × {ex.reps} reps</p>
+                                <p className="text-xs text-gray-400">{mg}</p>
                               )}
                             </div>
-                            <button
-                              onClick={() => { setSelectedMG(mg); openQuickAdd(ex.name, ex.sets, ex.reps) }}
-                              className="self-start mt-1 text-xs font-semibold px-3 py-1 rounded-full text-white"
-                              style={{ backgroundColor: MUSCLE_GROUP_COLORS[mg] }}>
-                              + Add to Session
-                            </button>
-                          </CardContent>
+                          </div>
+                          <button
+                            onClick={() => { setSelectedMG(mg); openQuickAdd(ex.name, ex.sets, ex.reps) }}
+                            className="shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full text-white ml-2"
+                            style={{ backgroundColor: MUSCLE_GROUP_COLORS[mg] }}>
+                            + Add
+                          </button>
                         </div>
-                      </Card>
-                    ))}
+                      )
+                    })}
                   </div>
-                </div>
-              ))
-            )}
-
-            {/* Full Body Section */}
-            <div className="mt-2">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-base">🏋️</span>
-                <p className="text-sm font-semibold text-gray-700">Full Body Workout</p>
-              </div>
-              <div className="space-y-2">
-                {EXERCISE_DETAILS['Full Body'].map(ex => (
-                  <Card key={ex.name} className="border-0 shadow-sm overflow-hidden">
-                    <div className="flex">
-                      <div className="relative w-24 h-20 shrink-0">
-                        <Image src={ex.img} alt={ex.name} fill className="object-cover" unoptimized />
-                      </div>
-                      <CardContent className="p-3 flex-1 flex flex-col justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-gray-800 leading-tight">{ex.name}</p>
-                          {lastLogs[ex.name] ? (
-                            <p className="text-xs mt-0.5 text-[#00897B]">
-                              Last: {lastLogs[ex.name].weight}{lastLogs[ex.name].unit} · {lastLogs[ex.name].sets}×{lastLogs[ex.name].reps}
-                            </p>
-                          ) : (
-                            <p className="text-xs text-gray-400 mt-0.5">{ex.sets} sets × {ex.reps} reps</p>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => { setSelectedMG('Full Body'); openQuickAdd(ex.name, ex.sets, ex.reps) }}
-                          className="self-start mt-1 text-xs font-semibold px-3 py-1 rounded-full text-white bg-[#00897B]">
-                          + Add to Session
-                        </button>
-                      </CardContent>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </TabsContent>
 
