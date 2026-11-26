@@ -22,18 +22,19 @@ export const MUSCLE_GROUPS: MuscleGroup[] = [
 export type ExerciseInfo = { name: string; img: string; sets: number; reps: number }
 
 export const EXERCISE_RECOMMENDATIONS: Record<MuscleGroup, string[]> = {
-  Chest: ['Chest Press Machine','Incline Press Machine','Pec Deck','Cable Fly','Smith Machine Bench Press'],
+  Chest: ['Chest Press Machine','Dumbbell Incline Bench Press','Machine Incline Bench Press','Pec Deck','Cable Fly','Smith Machine Bench Press'],
   Back: ['Lat Pulldown','Seated Row','T Bar Row','Pull Up Assistance Machine','Cable Row'],
-  Shoulder: ['Shoulder Press Machine','Lateral Raise Machine','Rear Delt Fly','Cable Front Raise','Shrug'],
-  Triceps: ['Seated Tricep Extension','Cable Pushdown','Rope Pushdown','Assisted Dip Machine','Overhead Extension'],
-  Biceps: ['Preacher Curl Machine','Cable Curl','Hammer Curl','EZ Curl Bar'],
+  Shoulder: ['Shoulder Press Machine','Dumbbell Seated Shoulder Press','Lateral Raise Machine','Cable Rope Face Pull','Cable Front Raise','Shrug'],
+  Triceps: ['Seated Tricep Extension','Cable Pushdown','Rope Pushdown','Assisted Dip Machine','Overhead Extension','Dumbbell Overhead Tricep Extension'],
+  Biceps: ['Preacher Curl Machine','EZ Bar Bicep Curl','Dumbbell Seated Bicep Curl','Cable Bicep Curl','Hammer Curl','EZ Curl Bar','Camber Curl','Dumbbell Wrist Curl'],
   Leg: ['Leg Press','Leg Extension','Leg Curl','Calf Raise Machine','Hack Squat'],
 }
 
 export const EXERCISE_DETAILS: Record<MuscleGroup, ExerciseInfo[]> = {
   Chest: [
     { name: 'Chest Press Machine', img: '/exercises/chest-press-machine.jpg', sets: 4, reps: 12 },
-    { name: 'Incline Press Machine', img: '/exercises/incline-press-machine.jpg', sets: 3, reps: 12 },
+    { name: 'Dumbbell Incline Bench Press', img: '/exercises/dumbbell-incline-bench-press.jpg', sets: 3, reps: 12 },
+    { name: 'Machine Incline Bench Press', img: '/exercises/machine-incline-bench-press.jpg', sets: 3, reps: 12 },
     { name: 'Pec Deck', img: '/exercises/pec-deck.jpg', sets: 3, reps: 15 },
     { name: 'Cable Fly', img: '/exercises/cable-fly.jpg', sets: 3, reps: 15 },
     { name: 'Smith Machine Bench Press', img: '/exercises/smith-bench-press.jpg', sets: 4, reps: 10 },
@@ -48,8 +49,9 @@ export const EXERCISE_DETAILS: Record<MuscleGroup, ExerciseInfo[]> = {
   ],
   Shoulder: [
     { name: 'Shoulder Press Machine', img: '/exercises/shoulder-press-machine.jpg', sets: 4, reps: 12 },
+    { name: 'Dumbbell Seated Shoulder Press', img: '/exercises/dumbbell-seated-shoulder-press.jpg', sets: 4, reps: 12 },
     { name: 'Lateral Raise Machine', img: '/exercises/lateral-raise.jpg', sets: 3, reps: 15 },
-    { name: 'Rear Delt Fly', img: '/exercises/rear-delt-fly.jpg', sets: 3, reps: 15 },
+    { name: 'Cable Rope Face Pull', img: '/exercises/cable-rope-face-pull.jpg', sets: 3, reps: 15 },
     { name: 'Cable Front Raise', img: '/exercises/cable-front-raise.jpg', sets: 3, reps: 12 },
     { name: 'Shrug', img: '/exercises/shrug.jpg', sets: 4, reps: 15 },
   ],
@@ -59,13 +61,17 @@ export const EXERCISE_DETAILS: Record<MuscleGroup, ExerciseInfo[]> = {
     { name: 'Rope Pushdown', img: '/exercises/rope-pushdown.jpg', sets: 3, reps: 15 },
     { name: 'Assisted Dip Machine', img: '/exercises/assisted-dip.jpg', sets: 3, reps: 12 },
     { name: 'Overhead Extension', img: '/exercises/overhead-extension.jpg', sets: 3, reps: 12 },
+    { name: 'Dumbbell Overhead Tricep Extension', img: '/exercises/dumbbell-overhead-tricep-extension.jpg', sets: 3, reps: 12 },
   ],
   Biceps: [
     { name: 'Preacher Curl Machine', img: '/exercises/preacher-curl.jpg', sets: 3, reps: 12 },
-    { name: 'Cable Curl', img: '/exercises/cable-curl.jpg', sets: 3, reps: 12 },
+    { name: 'EZ Bar Bicep Curl', img: '/exercises/ez-bar-bicep-curl.jpg', sets: 4, reps: 10 },
+    { name: 'Dumbbell Seated Bicep Curl', img: '/exercises/dumbbell-seated-bicep-curl.jpg', sets: 3, reps: 12 },
+    { name: 'Cable Bicep Curl', img: '/exercises/cable-bicep-curl.jpg', sets: 3, reps: 12 },
     { name: 'Hammer Curl', img: '/exercises/hammer-curl.jpg', sets: 3, reps: 12 },
     { name: 'EZ Curl Bar', img: '/exercises/ez-curl.jpg', sets: 4, reps: 10 },
     { name: 'Camber Curl', img: '/exercises/camber-curl.jpg', sets: 3, reps: 12 },
+    { name: 'Dumbbell Wrist Curl', img: '/exercises/dumbbell-wrist-curl.jpg', sets: 3, reps: 15 },
   ],
   Leg: [
     { name: 'Leg Press', img: '/exercises/leg-press.jpg', sets: 4, reps: 12 },
