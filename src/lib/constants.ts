@@ -16,7 +16,7 @@ export const MOTIVATIONAL_QUOTES = [
 ]
 
 export const MUSCLE_GROUPS: MuscleGroup[] = [
-  'Chest', 'Back', 'Shoulder', 'Leg', 'Biceps', 'Triceps', 'Full Body'
+  'Chest', 'Back', 'Shoulder', 'Leg', 'Biceps', 'Triceps'
 ]
 
 export type ExerciseInfo = { name: string; img: string; sets: number; reps: number }
@@ -24,7 +24,7 @@ export type ExerciseInfo = { name: string; img: string; sets: number; reps: numb
 export const EXERCISE_RECOMMENDATIONS: Record<MuscleGroup, string[]> = {
   Chest: ['Chest Press Machine','Incline Press Machine','Pec Deck','Cable Fly','Smith Machine Bench Press'],
   Back: ['Lat Pulldown','Seated Row','T Bar Row','Pull Up Assistance Machine','Cable Row'],
-  Shoulder: ['Shoulder Press Machine','Lateral Raise Machine','Rear Delt Fly','Cable Front Raise'],
+  Shoulder: ['Shoulder Press Machine','Lateral Raise Machine','Rear Delt Fly','Cable Front Raise','Shrug'],
   Triceps: ['Seated Tricep Extension','Cable Pushdown','Rope Pushdown','Assisted Dip Machine','Overhead Extension'],
   Biceps: ['Preacher Curl Machine','Cable Curl','Hammer Curl','EZ Curl Bar'],
   Leg: ['Leg Press','Leg Extension','Leg Curl','Calf Raise Machine','Hack Squat'],
@@ -52,6 +52,7 @@ export const EXERCISE_DETAILS: Record<MuscleGroup, ExerciseInfo[]> = {
     { name: 'Lateral Raise Machine', img: '/exercises/lateral-raise.jpg', sets: 3, reps: 15 },
     { name: 'Rear Delt Fly', img: '/exercises/rear-delt-fly.jpg', sets: 3, reps: 15 },
     { name: 'Cable Front Raise', img: '/exercises/cable-front-raise.jpg', sets: 3, reps: 12 },
+    { name: 'Shrug', img: '/exercises/shrug.jpg', sets: 4, reps: 15 },
   ],
   Triceps: [
     { name: 'Seated Tricep Extension', img: '/exercises/tricep-extension.jpg', sets: 3, reps: 15 },

@@ -1,4 +1,4 @@
-export type MuscleGroup = 'Chest' | 'Back' | 'Shoulder' | 'Leg' | 'Biceps' | 'Triceps' | 'Full Body'
+export type MuscleGroup = 'Chest' | 'Back' | 'Shoulder' | 'Leg' | 'Biceps' | 'Triceps'
 export type WeightUnit = 'KG' | 'LBS'
 
 export interface ExerciseLog {

@@ -30,7 +30,7 @@ interface ExerciseEntry {
 const emptyEntry = (): ExerciseEntry => ({ exercise_name: '', muscle_group: '', weight: '', unit: 'KG', sets: '', reps: '' })
 
 const MG_EMOJI: Record<MuscleGroup, string> = {
-  Chest: '🏋️', Back: '🔙', Shoulder: '🏔️', Leg: '🦵', Biceps: '💪', Triceps: '🔱', 'Full Body': '⚡'
+  Chest: '🏋️', Back: '🔙', Shoulder: '🏔️', Leg: '🦵', Biceps: '💪', Triceps: '🔱'
 }
 
 export default function WorkoutPage() {
