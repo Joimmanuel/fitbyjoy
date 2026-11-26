@@ -256,6 +256,12 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS weekly_goal INTEGER DEFAULT 4;
 ALTER TABLE exercise_logs ADD COLUMN IF NOT EXISTS muscle_group TEXT;
 ALTER TABLE workout_sessions ALTER COLUMN muscle_group DROP NOT NULL;
 ```
+4. Jika sudah punya data lama, jalankan migration rename exercise:
+```sql
+-- supabase-migration-rename-exercises.sql
+UPDATE exercise_logs SET exercise_name = 'Cable Rope Face Pull'        WHERE exercise_name = 'Rear Delt Fly';
+UPDATE exercise_logs SET exercise_name = 'Dumbbell Incline Bench Press' WHERE exercise_name = 'Incline Press Machine';
+```
 4. Buka **Authentication → Providers → Email** → matikan **Confirm email**
 5. Aktifkan **Anonymous Sign-ins** (opsional)
 
